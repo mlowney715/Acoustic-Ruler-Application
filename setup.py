@@ -1,9 +1,10 @@
 #!/usr/bin/python
-'''
-Acoustic Ruler Control App
-Design Project: Team 11 - Abner Barros; Phill Lowney; Alexander Andrade; Nicholas Beckwith
-Speech Technology & Applied Research Corp.  Copyright 2016
-'''
+#'''
+#Acoustic Ruler Control App
+#Design Project: Team 11 - Abner Barros; Phill Lowney; Alexander Andrade; Nicholas Beckwith
+#Speech Technology & Applied Research Corp.  Copyright 2016
+#'''
+
 #Main Window
 
 import wx
@@ -220,7 +221,7 @@ class MainWindow(wx.Frame):
     def __init__(self,parent, title):
         super(MainWindow, self).__init__(parent,title=title, size=(930, 500),style=wx.MINIMIZE_BOX
 	| wx.SYSTEM_MENU | wx.CAPTION |	 wx.CLOSE_BOX)
-        self.locale = wx.Locale(wx.LANGUAGE_ENGLISH)
+        #   self.locale = wx.Locale(wx.LANGUAGE_ENGLISH)
         self.frame = parent
         
         self.mainMenu()
@@ -245,20 +246,20 @@ class MainWindow(wx.Frame):
         str_verNum.SetFont(font_verNum)
         
         """Single Channel Button"""
-        bmp1 = wx.Bitmap("ICO\\single_channel_button.png", wx.BITMAP_TYPE_ANY)
+        bmp1 = wx.Bitmap("./ICO/single_channel_button.png", wx.BITMAP_TYPE_ANY)
         singleChanBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp1,size=(bmp1.GetWidth(), bmp1.GetHeight()))
-        wx.EVT_ENTER_WINDOW(singleChanBtn, self.OnEnter)
-        wx.EVT_LEAVE_WINDOW(singleChanBtn, self.OnLeave)
+        #wx.EVT_ENTER_WINDOW(singleChanBtn, self.OnEnter)
+        #wx.EVT_LEAVE_WINDOW(singleChanBtn, self.OnLeave)
         singleChanBtn.Bind(wx.EVT_BUTTON, self.openSingleChan)
         
         """Two Channel Button"""
-        bmp2 = wx.Bitmap("ICO\\two_channel_button.png", wx.BITMAP_TYPE_ANY)
+        bmp2 = wx.Bitmap("./ICO/two_channel_button.png", wx.BITMAP_TYPE_ANY)
         twoChanBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp2,size=(bmp2.GetWidth(), bmp2.GetHeight()))
         wx.EVT_ENTER_WINDOW(twoChanBtn, self.OnEnter)
         wx.EVT_LEAVE_WINDOW(twoChanBtn, self.OnLeave)
         
         """Teamable Button"""
-        bmp3 = wx.Bitmap("ICO\\teamable_button.png", wx.BITMAP_TYPE_ANY)
+        bmp3 = wx.Bitmap("./ICO/teamable_button.png", wx.BITMAP_TYPE_ANY)
         teamBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp3,size=(bmp3.GetWidth(), bmp3.GetHeight()))
         wx.EVT_ENTER_WINDOW(teamBtn, self.OnEnter)
         wx.EVT_LEAVE_WINDOW(teamBtn, self.OnLeave)
