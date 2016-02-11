@@ -1,0 +1,7 @@
+        groupBox1 = wx.StaticBox(panel, label="Trigger Measurement")
+        boxsizer = wx.StaticBoxSizer(wx.HORIZONTAL) #(groupBox1, wx.HORIZONTAL)
+        boxsizer_ver = wx.StaticBoxSizer(wx.VERTICAL)
+        boxsizer_ver.Add(triggerBtn, flag=wx.LEFT|wx.TOP, border=10)
+        boxsizer_ver.Add(str_trgChan, proportion=1)
+        boxsizer.Add(boxsizer_ver,flag=wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP, border=10)
+        #boxsizer.Add(triggerBtn, flag=wx.LEFT|wx.TOP, border=10)

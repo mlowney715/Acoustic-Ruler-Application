@@ -1,0 +1,43 @@
+        '''
+        #ACOUSTIC RULER TITLE on top
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        hbox1 = wx.BoxSizer(wx.HORIZONTAL)
+        str_AR = wx.StaticText(panel, -1, 'Acoustic Ruler',style=wx.ALIGN_CENTRE) #,style=wx.ALIGN_CENTRE)
+        font = wx.Font(36,  wx.SWISS, wx.NORMAL, wx.BOLD)
+        str_AR.SetFont(font)
+        str_AR.SetForegroundColour(wx.Colour(0,102,204))
+        hbox1.Add(str_AR, flag=wx.LEFT, border=240)
+        vbox.Add(hbox1, flag=wx.TOP|wx.LEFT, border=59)
+        vbox.Add((-1, 1))                                  # add space
+
+        #VERSION NUMBER
+        hbox2 = wx.BoxSizer(wx.HORIZONTAL)
+        str_verNum = wx.StaticText(panel, -1, 'Version 0.1',style=wx.ALIGN_CENTRE)
+        font1 = wx.Font(14,  wx.SWISS, wx.NORMAL, wx.NORMAL)
+        str_verNum.SetFont(font1)
+        hbox2.Add(str_verNum,flag=wx.LEFT, border=415)
+        vbox.Add(hbox2, flag=wx.LEFT|wx.TOP, border=1)
+        vbox.Add((-1, 1))                                  # add space
+
+        #Single Channel Button
+        bmp1 = wx.Bitmap("single_channel_button.png", wx.BITMAP_TYPE_ANY)
+        singleChanBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp1,size=(bmp1.GetWidth()+8, bmp1.GetHeight()+8))
+        hbox3 = wx.BoxSizer(wx.HORIZONTAL)
+        hbox3.Add(singleChanBtn,flag=wx.LEFT, border=10)
+       #vbox.Add(hbox3, flag=wx.LEFT|wx.TOP, border=50)
+        wx.EVT_ENTER_WINDOW(singleChanBtn, self.OnEnter)
+       #wx.EVT_LEAVE_WINDOW(bmapBtn, self.OnLeave)
+ 
+        #Two Channel Button
+        bmp2 = wx.Bitmap("two_channel_button.png", wx.BITMAP_TYPE_ANY)
+        twoChanBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp2,size=(bmp2.GetWidth()+8, bmp2.GetHeight()+8))
+        hbox3.Add(twoChanBtn, proportion=10)
+        vbox.Add(hbox3, flag=wx.LEFT|wx.TOP, border=50)
+        wx.EVT_ENTER_WINDOW(twoChanBtn, self.OnEnter)
+        
+        panel.SetSizer(vbox)
+        
+    def OnEnter(self, e):
+        btn = e.GetEventObject()
+        btn.SetCursor(wx.StockCursor(wx.CURSOR_HAND))
+    '''
