@@ -300,7 +300,8 @@ class MainWindow(wx.Frame):
         singleChanBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp1,size=(bmp1.GetWidth(), bmp1.GetHeight()))
         MacOsName = 'Darwin'
         WinOsName = 'Windows'
-        if str(platform.system()) == MacOsName or WinOsName :
+        GetOsName = str(platform.system())
+        if MacOsName or WinOsName == GetOsName:
             wx.EVT_ENTER_WINDOW(singleChanBtn, self.OnEnter)
             wx.EVT_LEAVE_WINDOW(singleChanBtn, self.OnLeave)
         singleChanBtn.Bind(wx.EVT_BUTTON, self.openSingleChan)
