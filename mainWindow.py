@@ -301,9 +301,20 @@ class MainWindow(wx.Frame):
         MacOsName = 'Darwin'
         WinOsName = 'Windows'
         GetOsName = str(platform.system())
+
+        while (MacOsName or WinOsName) == GetOsName:
+            try:
+                wx.EVT_ENTER_WINDOW(singleChanBtn, self.OnEnter)
+                wx.EVT_LEAVE_WINDOW(singleChanBtn, self.OnLeave)
+                break
+            except ValueError:
+                print "i did not work"
+                
+        '''
         if MacOsName or WinOsName == GetOsName:
             wx.EVT_ENTER_WINDOW(singleChanBtn, self.OnEnter)
             wx.EVT_LEAVE_WINDOW(singleChanBtn, self.OnLeave)
+        '''
         singleChanBtn.Bind(wx.EVT_BUTTON, self.openSingleChan)
 
         """Two Channel Button"""
