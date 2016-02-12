@@ -298,47 +298,33 @@ class MainWindow(wx.Frame):
         """Single Channel Button"""
         bmp1 = wx.Bitmap("./ICO/single_channel_button.png", wx.BITMAP_TYPE_ANY)
         singleChanBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp1,size=(bmp1.GetWidth(), bmp1.GetHeight()))
-        MacOsName = 'Darwin'
-        WinOsName = 'Windows'
-        GetOsName = str(platform.system())
-
-        while (MacOsName or WinOsName) == GetOsName:
-            try:
-                wx.EVT_ENTER_WINDOW(singleChanBtn, self.OnEnter)
-                wx.EVT_LEAVE_WINDOW(singleChanBtn, self.OnLeave)
-                break
-            except ValueError:
-                print "error changing button cursor for linux"
-
         singleChanBtn.Bind(wx.EVT_BUTTON, self.openSingleChan)
 
         """Two Channel Button"""
         bmp2 = wx.Bitmap("./ICO/two_channel_button.png", wx.BITMAP_TYPE_ANY)
         twoChanBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp2,size=(bmp2.GetWidth(), bmp2.GetHeight()))
-        while (MacOsName or WinOsName) == GetOsName:
-            try:
-                wx.EVT_ENTER_WINDOW(twoChanBtn, self.OnEnter)
-                wx.EVT_LEAVE_WINDOW(twoChanBtn, self.OnLeave)
-                break
-            except ValueError:
-                print "error changing button cursor for linux"
-
         #twoChanBtn.Bind(wx.EVT_BUTTON, self.openTwoChan)
         
         """Teamable Button"""
         bmp3 = wx.Bitmap("./ICO/teamable_button.png", wx.BITMAP_TYPE_ANY)
         teamBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp3,size=(bmp3.GetWidth(), bmp3.GetHeight()))
-        wx.EVT_ENTER_WINDOW(teamBtn, self.OnEnter)
-        wx.EVT_LEAVE_WINDOW(teamBtn, self.OnLeave)
+        #teamBtn.Bind(wx.EVT_BUTTON, self.openTeamChan)
+
+        #Button effect on the Mac & Windows
+        MacOsName = 'Darwin'
+        WinOsName = 'Windows'
+        GetOsName = str(platform.system())
         while (MacOsName or WinOsName) == GetOsName:
             try:
+                wx.EVT_ENTER_WINDOW(singleChanBtn, self.OnEnter)
+                wx.EVT_LEAVE_WINDOW(singleChanBtn, self.OnLeave)
+                wx.EVT_ENTER_WINDOW(twoChanBtn, self.OnEnter)
+                wx.EVT_LEAVE_WINDOW(twoChanBtn, self.OnLeave)
                 wx.EVT_ENTER_WINDOW(teamBtn, self.OnEnter)
                 wx.EVT_LEAVE_WINDOW(teamBtn, self.OnLeave)
                 break
             except ValueError:
-                print "error changing button cursor for linux"
-
-        #twoChanBtn.Bind(wx.EVT_BUTTON, self.openTeamChan)
+                print "error changing button cursor for linux OS"
         
         """HELP LINK"""
         str_help = wx.StaticText(panel, -1, 'Help',style=wx.ALIGN_CENTRE)
