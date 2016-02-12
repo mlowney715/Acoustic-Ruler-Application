@@ -314,7 +314,7 @@ class MainWindow(wx.Frame):
         MacOsName = 'Darwin'
         WinOsName = 'Windows'
         GetOsName = str(platform.system())
-        while (MacOsName or WinOsName) == GetOsName:
+        while WinOsName == GetOsName or MacOsName == GetOsName:
             try:
                 wx.EVT_ENTER_WINDOW(singleChanBtn, self.OnEnter)
                 wx.EVT_LEAVE_WINDOW(singleChanBtn, self.OnLeave)
