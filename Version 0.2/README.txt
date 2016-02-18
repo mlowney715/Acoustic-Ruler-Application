@@ -1,0 +1,1 @@
+Install pyserial for serial communication.

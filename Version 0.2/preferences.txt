@@ -1,0 +1,2 @@
+speed of sound = 400.0
+Data path = D:\Abner\Documents\AC CONTROL APP Version 0.2\Logs
