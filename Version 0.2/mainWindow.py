@@ -43,12 +43,6 @@ speedSound = float(configPref['speed of sound'])
 dataLoggerPath = str(configPref['Data path'])
 
 date = datetime.datetime.now()
-###############################################################################################################
-######## Get OS running the application #######################################################################
-MacOsName = 'Darwin'
-WinOsName = 'Windows'
-LinuxOsName = 'Linux'
-GetOsName = str(platform.system())
 
 ##############################################################################################################
 class EditPreferencesSngChanWindow(wx.Dialog):
@@ -438,7 +432,7 @@ class MainWindow(wx.Frame):
         wx.Frame.__init__(self,parent,ID,"Acoustic Ruler Control Application",size=(930,500),style=wx.MINIMIZE_BOX|wx.SYSTEM_MENU|wx.CAPTION|wx.CLOSE_BOX)
 
         #fixes mismatch between C/C++ and Windows locale
-        while WinOsName == GetOsName or MacOsName == GetOsName:
+        while str(platform.system()) == 'Windows' or str(platform.system()) == 'Darwin':
             try:
                 self.locale = wx.Locale(wx.LANGUAGE_ENGLISH)
                 break
@@ -480,7 +474,7 @@ class MainWindow(wx.Frame):
         #teamBtn.Bind(wx.EVT_BUTTON, self.openTeamChan)
 
         #Button effect on the Mac & Windows
-        while WinOsName == GetOsName or MacOsName == GetOsName:
+        while str(platform.system()) == 'Windows' or str(platform.system()) == 'Darwin':
             try:
                 wx.EVT_ENTER_WINDOW(singleChanBtn, self.OnEnter)
                 wx.EVT_LEAVE_WINDOW(singleChanBtn, self.OnLeave)
