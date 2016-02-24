@@ -10,6 +10,7 @@ import sys
 import serial
 
 from wx.lib.pubsub import pub
+from wifi import Cell
 
 configPrefPath = os.path.realpath(
 			os.path.abspath
@@ -52,10 +53,15 @@ class single_deviceconf(wx.Dialog):
         # Get serial port list on machine
         portList = list(self.serial_ports(self))
 
+	cellList = Cell.all('wlan0')
+	ssidList = list()
+	count = len(cellList)
+	for i in range(0, count-1):
+		ssidList.append(cellList[i].ssid)
         # Insert hint for end user
         portList.insert(0, 'Select Board to connect')
         
-        self.configDevWindow(portList) 
+        self.configDevWindow(ssidList) 
 #------------------------------------------------------------------------------------------------
     def configDevWindow(self,myPorts):
         panel = wx.Panel(self, wx.ID_ANY)
