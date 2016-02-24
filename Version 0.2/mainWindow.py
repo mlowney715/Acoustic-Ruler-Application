@@ -127,7 +127,7 @@ class mainWindow(wx.Frame):
         wx.AboutBox(info)
 #------------------------------------------------------------------------------------------------        
     def openSingleChan(self, event):
-        self.Destroy()
+	    #self.Destroy()
         singleChanframe = single_window(parent=None,ID=998)
         singleChanframe.Centre()
         singleChanframe.Show()

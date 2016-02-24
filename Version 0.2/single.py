@@ -499,9 +499,9 @@ class single_window(wx.Frame):
 #-------------------------------------------------------------------------------------------------------------------      
     def returnMainMenu(self, event):
         self.Destroy()
-        main_menu = MainWindow(parent=None,ID=999)
-        main_menu.Show()
-        main_menu.Centre()
+	# main_menu = mainWindow(parent=None,ID=999)
+	# main_menu.Show()
+	# main_menu.Centre()
 #-------------------------------------------------------------------------------------------------------------------
     def SetDistanceUnitComboboxVal(self, event):
         metricState = self.metricUnitRadioBtn.GetValue()
