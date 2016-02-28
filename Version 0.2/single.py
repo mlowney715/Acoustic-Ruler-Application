@@ -9,40 +9,15 @@ import time
 import sys
 import serial
 
+from config import accessconfig
+
 from wx.lib.pubsub import pub
 from wifi import Cell
 
-configPrefPath = os.path.realpath(
-			os.path.abspath
-			(
-				os.path.join
-				(
-					os.path.split
-					(
-						inspect.getfile
-						( 
-							inspect.currentframe() 
-						)
-					)
-					[0],"configPref"
-				)
-			)
-		)
-
-#load config pref. modules from subfolder
-
-if configPrefPath not in sys.path:
-    sys.path.insert(0, configPrefPath)
-from configobj import ConfigObj
-
-######Global Variables#########################################################################################
-#Loading preferences from user's preference file
-configPref =  ConfigObj()
-configPref = ConfigObj('preferences.txt')
-speedSound = float(configPref['speed of sound'])
-dataLoggerPath = str(configPref['Data path'])
-
+# Global Variables
+speedSound, dataLoggerPath = accessconfig()
 date = datetime.datetime.now()
+
 ##############################################################################################################   
 ##############################################################################################################
 class single_deviceconf(wx.Dialog):
