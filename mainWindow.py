@@ -50,17 +50,17 @@ class mainWindow(wx.Frame):
         str_verNum.SetFont(font_verNum)
 
         """Single Channel Button"""
-        bmp1 = wx.Bitmap("./ICO/single_channel_button.png", wx.BITMAP_TYPE_ANY)
+        bmp1 = wx.Bitmap("./buttons/single_channel_button.png", wx.BITMAP_TYPE_ANY)
         singleChanBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp1,size=(bmp1.GetWidth(), bmp1.GetHeight()))
         singleChanBtn.Bind(wx.EVT_BUTTON, self.openSingleChan)
 
         """Two Channel Button"""
-        bmp2 = wx.Bitmap("./ICO/two_channel_button.png", wx.BITMAP_TYPE_ANY)
+        bmp2 = wx.Bitmap("./buttons/two_channel_button.png", wx.BITMAP_TYPE_ANY)
         twoChanBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp2,size=(bmp2.GetWidth(), bmp2.GetHeight()))
         #twoChanBtn.Bind(wx.EVT_BUTTON, self.openTwoChan)
         
         """Teamable Button"""
-        bmp3 = wx.Bitmap("./ICO/teamable_button.png", wx.BITMAP_TYPE_ANY)
+        bmp3 = wx.Bitmap("./buttons/teamable_button.png", wx.BITMAP_TYPE_ANY)
         teamBtn = wx.BitmapButton(panel, id=wx.ID_ANY, bitmap=bmp3,size=(bmp3.GetWidth(), bmp3.GetHeight()))
         #teamBtn.Bind(wx.EVT_BUTTON, self.openTeamChan)
 
