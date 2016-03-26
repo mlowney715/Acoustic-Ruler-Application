@@ -61,13 +61,13 @@ class Adata:
 			self.config.write(configfile)
 		configfile.close()
 		self.path = newpath
-	
+
 	def createLogFile(self):
-		log = open(self.path+"/"+"SingleChannelLog-"+str(datetime.date.today()), "a+")
+                log = open(self.path+"/"+"SingleChannelLog-"+str(datetime.date.today())+".txt", "a")
 	
 	def measure(self, delay):
 		distance = self.speed*float(delay)
-		log = open(self.path+"/"+"measurements-"+str(datetime.date.today()), "a+")
+		log = open(self.path+"/"+"SingleChannelLog-"+str(datetime.date.today())+".txt", "a")
 		log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
 		log.write("Delay: " + str(delay)+" msec\n")
 		log.write("Distance: " + str(distance)+" m\n\n")
