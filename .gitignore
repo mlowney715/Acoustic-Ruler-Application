@@ -1,5 +1,7 @@
-# Auto-generated ini file
-preferences.ini
+# Auto-generated config file
+ruler.cfg
+# ctags "tags" file
+tags
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
