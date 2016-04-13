@@ -11,7 +11,7 @@ def display_help():
 
 data = Adata('ruler.cfg')
 
-server = Aserver('192.168.1.102', 12000)
+server = Aserver('10.0.0.3', 12000)
 
 input = ""
 

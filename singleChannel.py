@@ -1,22 +1,16 @@
 #!/usr/bin/python
 
 import wx
-import os 
-import platform 
-import glob 
-import serial
 import datetime
 import time
 import sys
 import serial
 
 from wx.lib.pubsub import pub
+from SingleConfig import Single_deviceconf
 from Adata import Adata
-from Aserver import Aserver
 
 data = Adata('ruler.cfg')
-
-server = Aserver('10.0.0.3', 12000)
 
 class Single_window(wx.Frame):
     """Open a Single-Channel Window."""
@@ -41,14 +35,14 @@ class Single_window(wx.Frame):
         fileMenu.AppendItem(qmi)
         self.Bind(wx.EVT_MENU, self.quit_application, qmi)
         editMenu = wx.Menu()
-        optionsMenu = wx.Menu()
-        optionsMenu.Append(wx.ID_ANY,'&Configure Wi-Fi')
-        optionsMenu.Append(wx.ID_ANY,'&Calibrate System')
+        # optionsMenu = wx.Menu()
+        # optionsMenu.Append(wx.ID_ANY,'&Configure Wi-Fi')
+        # optionsMenu.Append(wx.ID_ANY,'&Calibrate System')
         helpMenu = wx.Menu()
         helpMenu.Append(wx.ID_ANY,'&About')
         menubar.Append(fileMenu, '&File')
-        menubar.Append(editMenu, '&Edit')
-        menubar.Append(optionsMenu, '&Options')
+        # menubar.Append(editMenu, '&Edit')
+        # menubar.Append(optionsMenu, '&Options')
         menubar.Append(helpMenu, '&Help')
         self.SetMenuBar(menubar)
 
@@ -134,10 +128,12 @@ class Single_window(wx.Frame):
                                flag=wx.EXPAND|wx.LEFT|wx.TOP
                                     |wx.BOTTOM|wx.RIGHT,
                                border=10)
+
         self.metricUnitRadioBtn.Bind(wx.EVT_RADIOBUTTON,
                                      self.change_distance_units)
         self.imperialUnitRadioBtn.Bind(wx.EVT_RADIOBUTTON,
                                        self.change_distance_units)
+
         measureBtn.Bind(wx.EVT_BUTTON, self.trig_measure)
 
         systemID = wx.StaticText(panel, -1, 'System ID:')
@@ -181,11 +177,8 @@ class Single_window(wx.Frame):
                                 label="Edit Preferences")
         configDeviceBtn = wx.Button(panel, size=(160,27),
                                     label="Configure Device")
-        searchDeviceBtn = wx.Button(panel, size=(160,27),
-                                    label="Search for Device")
         editPrefBtn.SetFont(font_std)
         configDeviceBtn.SetFont(font_std)
-        searchDeviceBtn.SetFont(font_std)
         congfiStaticBox = wx.StaticBox(panel, label='')
         congfiStaticBox.SetFont(font_stdBold)
         configBoxSizer = wx.StaticBoxSizer(congfiStaticBox, wx.VERTICAL)
@@ -194,12 +187,8 @@ class Single_window(wx.Frame):
         configBoxSizer.Add(configDeviceBtn,
                            flag=wx.EXPAND|wx.LEFT|wx.TOP|wx.BOTTOM|wx.RIGHT,
                            border=20)
-        configBoxSizer.Add(searchDeviceBtn,
-                           flag=wx.EXPAND|wx.LEFT|wx.BOTTOM|wx.RIGHT,
-                           border=20)
         editPrefBtn.Bind(wx.EVT_BUTTON, self.open_preferences)
         configDeviceBtn.Bind(wx.EVT_BUTTON, self.open_configuration)
-        searchDeviceBtn.Bind(wx.EVT_BUTTON, self.search_device)
 
         self.feed_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(500,120),
                        style=wx.TE_READONLY|wx.ALIGN_LEFT|wx.TE_MULTILINE
@@ -225,7 +214,7 @@ class Single_window(wx.Frame):
     def quit_application(self, event):
         """Quit The Application when File->Quit is clicked."""
         self.Close()
-        server.closeSocket()
+        data.quit()
 
     def update_feed(self,msg,arg2=None):
         """Update the live feed at the bottom of the window when something
@@ -247,7 +236,7 @@ class Single_window(wx.Frame):
         if self.distance_txtBox.GetValue() != "":
             last_value = float(self.distance_txtBox.GetValue())
 
-        last_unitComboboxValue = self.distanceUnitCombobox.GetValue()
+        last_units = self.distanceUnitCombobox.GetValue()
 
         if imperialState == True:
             self.distanceUnitCombobox.Clear()
@@ -258,32 +247,32 @@ class Single_window(wx.Frame):
             self.distanceUnitCombobox.AppendItems(self.metrics)
             self.distanceUnitCombobox.SetValue(self.metrics[0])
 
-        current_unitComboboxValue = self.distanceUnitCombobox.GetValue()
+        current_units = self.distanceUnitCombobox.GetValue()
 
         if self.distance_txtBox.GetValue() != "":
-            if (last_unitComboboxValue == "cm" 
-                    and current_unitComboboxValue == "in"):
+            if (last_units == "cm" 
+                    and current_units == "in"):
                 self.distance_txtBox.SetValue(str((last_value)/2.54))
-            elif (last_unitComboboxValue == "cm" 
-                    and current_unitComboboxValue == "ft"):
+            elif (last_units == "cm" 
+                    and current_units == "ft"):
                 self.distance_txtBox.SetValue(str((last_value)* 0.032808))
-            elif (last_unitComboboxValue == "m" 
-                    and current_unitComboboxValue == "in"):
+            elif (last_units == "m" 
+                    and current_units == "in"):
                 self.distance_txtBox.SetValue(str((last_value)* 39.370))
-            elif (last_unitComboboxValue == "m" 
-                    and current_unitComboboxValue == "ft"):
+            elif (last_units == "m" 
+                    and current_units == "ft"):
                 self.distance_txtBox.SetValue(str((last_value)/0.3048))
-            elif (last_unitComboboxValue == "in" 
-                    and current_unitComboboxValue == "cm"):
+            elif (last_units == "in" 
+                    and current_units == "cm"):
                 self.distance_txtBox.SetValue(str((last_value)*2.54))
-            elif (last_unitComboboxValue == "in"
-                    and current_unitComboboxValue == "m"):
+            elif (last_units == "in"
+                    and current_units == "m"):
                 self.distance_txtBox.SetValue(str((last_value)/39.370))
-            elif (last_unitComboboxValue == "ft"
-                    and current_unitComboboxValue == "cm"):
+            elif (last_units == "ft"
+                    and current_units == "cm"):
                 self.distance_txtBox.SetValue(str((last_value)/0.032808))
-            elif (last_unitComboboxValue == "ft"
-                    and current_unitComboboxValue == "m"):
+            elif (last_units == "ft"
+                    and current_units == "m"):
                 self.distance_txtBox.SetValue(str((last_value)/3.2808))
 
     def open_preferences(self, event):
@@ -306,29 +295,19 @@ class Single_window(wx.Frame):
         configDevFrame.ShowModal()
         configDevFrame.Destroy()
  
-    def search_device(self,event):
-        """Search for a device when the Search For Device button is clicked."""
-        bi = wx.BusyInfo("Searching for Device, please wait...", self)
-        # **add code here to establish connection with the device over wifi
-        time.sleep(3)
-        bi2 = wx.BusyInfo("Device found!", self)
-        bi.Destroy()
-        bi2.Destroy()
-
     def trig_measure(self,event):
         """Trigger a measurement and display the results in the proper
         units.
         """
-        unitComboboxValue = self.distanceUnitCombobox.GetValue()
-        delay = server.getdelay()
-        distance = data.measure(delay)
-        if unitComboboxValue == "m":
+        units = self.distanceUnitCombobox.GetValue()
+        distance = data.measure()
+        if units == "m":
             self.distance_txtBox.SetValue('{:0.2f}'.format(distance))
-        elif unitComboboxValue == "cm":
+        elif units == "cm":
             self.distance_txtBox.SetValue('{:0.2f}'.format((distance)*100))
-        elif unitComboboxValue == "in":
+        elif units == "in":
             self.distance_txtBox.SetValue('{:0.2f}'.format((distance)*39.370))
-        elif unitComboboxValue == "ft":
+        elif units == "ft":
             self.distance_txtBox.SetValue('{:0.2f}'.format((distance)/0.3048))
         self.distance_txtBox.SetValue(str(distance))
         self.propdelay_txtBox.SetValue(str(delay*1000.0))
@@ -336,13 +315,13 @@ class Single_window(wx.Frame):
         try: 
         delay = server.getdelay()
         data.measure(delay)
-        if unitComboboxValue == "m":
+        if units == "m":
             self.distance_txtBox.SetValue(str(delay*data.speed))
-        elif unitComboboxValue == "cm":
+        elif units == "cm":
             self.distance_txtBox.SetValue(str((delay*data.speed)*100))
-        elif unitComboboxValue == "in":
+        elif units == "in":
             self.distance_txtBox.SetValue(str((delay*data.speed)*39.370))
-        elif unitComboboxValue == "ft":
+        elif units == "ft":
             self.distance_txtBox.SetValue(str((delay*data.speed)/0.3048))
 
         self.distance_txtBox.SetValue(str(delay*data.speed))
@@ -354,176 +333,20 @@ class Single_window(wx.Frame):
     def update_distance_text(self,last_val):
         """Do basically the same thing as the change_units function."""
         last_value = self.distance_txtBox.GetValue()
-        last_unitComboboxValue = last_val
-        current_unitComboboxValue = self.distanceUnitCombobox.GetValue()
-        if (last_unitComboboxValue == "cm" 
-                and current_unitComboboxValue == "m"):
+        last_units = last_val
+        current_units = self.distanceUnitCombobox.GetValue()
+        if (last_units == "cm" 
+                and current_units == "m"):
             self.distance_txtBox.SetValue(str((last_value)/100.0))
-        elif (last_unitComboboxValue == "m" 
-                and current_unitComboboxValue == "cm"):
+        elif (last_units == "m" 
+                and current_units == "cm"):
             self.distance_txtBox.SetValue(str((last_value)*100.0))
-        elif (last_unitComboboxValue == "in" 
-                and current_unitComboboxValue == "ft"):
+        elif (last_units == "in" 
+                and current_units == "ft"):
             self.distance_txtBox.SetValue(str((last_value)*0.083333))
-        elif (last_unitComboboxValue == "ft" 
-                and current_unitComboboxValue == "in"):
+        elif (last_units == "ft" 
+                and current_units == "in"):
             self.distance_txtBox.SetValue(str((last_value)*12.000))
-
-
-class Single_deviceconf(wx.Dialog):
-    """Open the configuration window for a Single-Channel System."""
-
-    def __init__(self, parent, ID):
-        wx.Dialog.__init__(self,parent, ID, "Configure Device",size=(510,350),
-                style=wx.MINIMIZE_BOX| wx.CAPTION |wx.CLOSE_BOX)
-
-        ports = list(self.scan_serial(self))
-        ports.insert(0, "Select Board to connect")
-        # # Pass this as an arg. to configDevWindow func. below
-        # # Scan ang get wifi networks in the surround area
-        # networkList = list(self.network_ports(self))
-        # networkList.insert(0,'Select an Access Point')
-        self.setup(ports)
-
-    def setup(self, myPorts):
-        """Create The Configuration Window"""
-        panel = wx.Panel(self, wx.ID_ANY)
-        panel.SetAutoLayout(1)
-        self.font_std = wx.Font(12,  wx.SWISS, wx.NORMAL, wx.NORMAL)
-
-        serialSys_label = wx.StaticText(panel, -1, "System Available:")
-        serialSys_comboBox = wx.ComboBox(panel, -1, size=(200, 30),
-                                         choices=myPorts, style=wx.CB_READONLY)
-        serialSys_comboBox.SetSelection(0)
-        serialSys_refresh_Btn = wx.Button(panel, size=(100,30),
-                                          label="Refresh")
-
-        network_label = wx.StaticText(panel, -1, "Choose a Network:")
-        network_comboBox = wx.ComboBox(panel,-1, size=(200,30), choices='',
-                                       style=wx.CB_READONLY)
-        network_comboBox.SetSelection(0)
-        network_refresh_Btn = wx.Button(panel, size=(100,30), label="Refresh")
-
-        password_label = wx.StaticText(panel, -1, "Password:")
-        password_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '', size=(200,27),
-                                      style=wx.ALIGN_LEFT|wx.TE_PASSWORD)
-
-        pushBtn = wx.Button(panel, size=(130,30), label="Push")
-        pingBtn = wx.Button(panel, size=(130,30), label="Ping")
-        calibrateSysBtn = wx.Button(panel, size=(130,30),label="Calibrate")
-
-        serialSys_label.SetFont(self.font_std)
-        serialSys_comboBox.SetFont(self.font_std)
-        serialSys_refresh_Btn.SetFont(self.font_std)
-        network_label.SetFont(self.font_std)
-        network_comboBox.SetFont(self.font_std)
-        network_refresh_Btn.SetFont(self.font_std)
-        password_label.SetFont(self.font_std)
-        password_txtBox.SetFont(self.font_std)
-        pushBtn.SetFont(self.font_std)
-        pingBtn.SetFont(self.font_std)
-        calibrateSysBtn.SetFont(self.font_std)
-
-        serialCommStaticBox = wx.StaticBox(panel,label="Serial")
-        serialCommStaticBox.SetFont(self.font_std)
-        serialCommBoxSizer = wx.StaticBoxSizer(serialCommStaticBox,
-                                               wx.HORIZONTAL)
-        serialCommBoxSizer.Add(serialSys_label,
-                               flag=wx.LEFT|wx.TOP|wx.BOTTOM|wx.RIGHT,
-                               border=5)
-        serialCommBoxSizer.Add(serialSys_comboBox,
-                               flag=wx.LEFT|wx.TOP|wx.BOTTOM|wx.RIGHT,
-                               border=5)
-        serialCommBoxSizer.Add(serialSys_refresh_Btn,
-                               flag=wx.TOP|wx.BOTTOM|wx.RIGHT|wx.ALIGN_RIGHT,
-                               border=5)
-
-        wirelessGridSizer = wx.GridBagSizer(2,3)
-        wirelessGridSizer.Add(network_label, pos=(0,0),
-                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
-                              border=5)
-        wirelessGridSizer.Add(network_comboBox, pos=(0,1),
-                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
-                              border=5)
-        wirelessGridSizer.Add(network_refresh_Btn, pos=(0,2),
-                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
-                              border=5)
-        wirelessGridSizer.Add(password_label, pos=(1,0),
-                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
-                              border=5)
-        wirelessGridSizer.Add(password_txtBox, pos=(1,1),
-                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
-                              border=5)
-
-        wirelessGroupBox = wx.StaticBox(panel, label = "Wireless")
-        wirelessGroupBox.SetFont(self.font_std)
-        wirelessBoxsizer = wx.StaticBoxSizer(wirelessGroupBox, wx.HORIZONTAL)
-        wirelessBoxsizer.Add(wirelessGridSizer, flag=wx.TOP|wx.LEFT|wx.BOTTOM,
-                             border=10)
-
-        btnStaticBox = wx.StaticBox(panel, label="")
-        btnStaticBox.SetFont(self.font_std)
-        btnBoxSizer = wx.StaticBoxSizer(btnStaticBox, wx.HORIZONTAL)
-        btnBoxSizer.Add(pushBtn, flag=wx.LEFT, border=30)
-        btnBoxSizer.Add(pingBtn, flag=wx.LEFT|wx.RIGHT, border=10)
-        btnBoxSizer.Add(calibrateSysBtn, flag=wx.RIGHT, border=5)
-
-        configDevGridSizer = wx.GridBagSizer(3,5)
-        configDevGridSizer.Add(serialCommBoxSizer, pos=(0,0), span=(0,4),
-                               flag=wx.EXPAND|wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM
-                                   |wx.LEFT, border=10)
-        configDevGridSizer.Add(wirelessBoxsizer, pos=(1,0), span=(1,4),
-                               flag=wx.EXPAND|wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM
-                                   |wx.LEFT, border=10)
-        configDevGridSizer.Add(btnBoxSizer, pos=(2,0), span=(2,4),
-                               flag=wx.EXPAND|wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM
-                                   |wx.LEFT, border=10)
-        panel.SetSizerAndFit(configDevGridSizer)
-
-        self.Bind(wx.EVT_CLOSE,self.close_configuration)
-        calibrateSysBtn.Bind(wx.EVT_BUTTON, self.calibrate_device)
-
-    def close_configuration(self,event):
-        """Close the Configuration Window when the close button is clicked."""
-        self.Destroy()
-        event.Skip()
-        
-    def scan_serial(self,event):
-        """Scan the system for serial ports."""
-        if str(platform.system()) == 'Windows':
-            tempList = ['COM%s' % (i + 1) for i in range(256)]
-        elif str(platform.system()) == 'Linux':
-            tempList = glob.glob('/dev/tty[A-Za-z]*')
-        elif str(platform.system()) == 'Darwin':
-            tempList = glob.glob('/dev/tty.*')
-        else:
-            raise EnvironmentError("Unsupported platform")
-
-        results = []
-        for a_port in tempList:
-            try:
-                s = serial.Serial(a_port)
-                s.close()
-                results.append(a_port)
-            except serial.SerialException:
-                pass
-        return results
-    
-    def calibrate_device(self,event):
-        """Instruct and supervise the device calibration process."""
-        message = """Place Microphone as close as possible to speaker.\n
-        Click 'OK' to start system calibration."""
-        Dlg = wx.MessageDialog(None, message, "Start System Calibration",
-                               wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
-        Dlg.SetFont(self.font_std)
-        if Dlg.ShowModal() == wx.ID_OK:
-            bi = wx.BusyInfo("Calibrating System, please wait...", self)
-            time.sleep(5)
-            bi2 = wx.BusyInfo("Done!", self)
-            time.sleep(2)
-            bi.Destroy()
-            bi2.Destroy()
-        Dlg.Destroy()
 
 class Single_pref(wx.Dialog):
     """Open the preferences window for the Single Channel System."""
@@ -532,6 +355,7 @@ class Single_pref(wx.Dialog):
         wx.Dialog.__init__(self,parent, ID, "Edit Preferences", size=(670,300),
                            style=wx.MINIMIZE_BOX|wx.CAPTION|wx.CLOSE_BOX)
         self.setup()
+
         
     def setup(self):
         panel = wx.Panel(self, wx.ID_ANY)
@@ -647,3 +471,11 @@ class Single_pref(wx.Dialog):
         self.MakeModal(False)
         self.Close()
         event.Skip()
+
+
+if __name__ == '__main__':
+    app = wx.App(redirect=True)
+    Mainframe = Single_window(parent=None,ID=999)
+    Mainframe.Centre()
+    Mainframe.Show()
+    app.MainLoop()

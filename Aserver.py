@@ -1,4 +1,5 @@
 from socket import *
+
 class Aserver:
 
 	def __init__(self, serverName, serverPort):
@@ -14,3 +15,4 @@ class Aserver:
 
 	def closeSocket(self):
 		self.clientSocket.close()
+
