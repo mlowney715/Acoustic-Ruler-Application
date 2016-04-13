@@ -1,7 +1,7 @@
 import datetime
 import os
 import ConfigParser
-from Aserver import Aserver
+from Aserver import Aserver, DeviceTimeoutError
 
 class Adata:
 
@@ -30,6 +30,7 @@ class Adata:
         with open(configname, 'wb') as configfile:
             self.config.write(configfile)
         configfile.close()
+        self.load(configname)
 
     def load(self, configname):
         """Try to load the already existing configuration file. If it is
@@ -40,7 +41,8 @@ class Adata:
             self.speed = self.config.getfloat('phys_env', 'speed_sound')
             self.path = self.config.get('data_env', 'log_path')
             self.server = Aserver(self.config.get('socket_info', 'device_address'),
-                                  self.config.get('socket_info', 'device_port'))
+                                  int(self.config.get('socket_info',
+                                                      'device_port')))
         except ConfigParser.Error:
             print "Warning: Corrupt config file. Resetting to defaults..."
             os.remove(configname)
@@ -85,19 +87,26 @@ class Adata:
         configfile.close()
         self.path = newpath
 	
-    def measure(self, delay):
+    def measure(self):
         """Tell the device to take a measurement and then calculate the
         distance, write to the log file, and return the distance.
         """
-        delay = self.server.getdelay()
-        distance = self.speed*float(delay)
-        log = open(self.path+"/"+"SingleChannelLog-"+str(datetime.date.today())
-                   +".txt", "a+")
-        log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
-        log.write("Delay: " + str(delay)+" msec\n")
-        log.write("Distance: " + str(distance)+" m\n\n")
-        return distance
+        try:
+            delay = self.server.getdelay()
+            distance = self.speed*float(delay)
+            log = open(self.path+"/"+"SingleChannelLog-"+str(datetime.date.today())
+                       +".txt", "a+")
+            log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
+            log.write("Delay: " + str(delay)+" msec\n")
+            log.write("Distance: " + str(distance)+" m\n\n")
+            return distance
+        except DeviceTimeoutError:
+            raise NoDeviceError
 
     def quit(self):
         """Close any sockets or serial ports that have been opened."""
         self.server.closeSocket()
+        
+
+class NoDeviceError(Exception):
+    pass

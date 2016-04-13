@@ -8,7 +8,7 @@ import serial
 
 from wx.lib.pubsub import pub
 from SingleConfig import Single_deviceconf
-from Adata import Adata
+from Adata import Adata, NoDeviceError
 
 data = Adata('ruler.cfg')
 
@@ -299,36 +299,23 @@ class Single_window(wx.Frame):
         """Trigger a measurement and display the results in the proper
         units.
         """
-        units = self.distanceUnitCombobox.GetValue()
-        distance = data.measure()
-        if units == "m":
-            self.distance_txtBox.SetValue('{:0.2f}'.format(distance))
-        elif units == "cm":
-            self.distance_txtBox.SetValue('{:0.2f}'.format((distance)*100))
-        elif units == "in":
-            self.distance_txtBox.SetValue('{:0.2f}'.format((distance)*39.370))
-        elif units == "ft":
-            self.distance_txtBox.SetValue('{:0.2f}'.format((distance)/0.3048))
-        self.distance_txtBox.SetValue(str(distance))
-        self.propdelay_txtBox.SetValue(str(delay*1000.0))
-        '''
-        try: 
-        delay = server.getdelay()
-        data.measure(delay)
-        if units == "m":
-            self.distance_txtBox.SetValue(str(delay*data.speed))
-        elif units == "cm":
-            self.distance_txtBox.SetValue(str((delay*data.speed)*100))
-        elif units == "in":
-            self.distance_txtBox.SetValue(str((delay*data.speed)*39.370))
-        elif units == "ft":
-            self.distance_txtBox.SetValue(str((delay*data.speed)/0.3048))
-
-        self.distance_txtBox.SetValue(str(delay*data.speed))
-        self.propdelay_txtBox.SetValue(str(delay*1000.0))
-        except ServerError:
-        print "Error connecting to device"
-        '''
+        try:
+            units = self.distanceUnitCombobox.GetValue()
+            distance = data.measure()
+            if units == "m":
+                self.distance_txtBox.SetValue('{:0.2f}'.format(distance))
+            elif units == "cm":
+                self.distance_txtBox.SetValue('{:0.2f}'.format((distance)*100))
+            elif units == "in":
+                self.distance_txtBox.SetValue('{:0.2f}'.format((distance)*39.370))
+            elif units == "ft":
+                self.distance_txtBox.SetValue('{:0.2f}'.format((distance)/0.3048))
+            self.distance_txtBox.SetValue(str(distance))
+            self.propdelay_txtBox.SetValue(str(delay*1000.0))
+        except NoDeviceError:
+            pub.sendMessage('update_feed',
+                            msg="Error connecting to device.", 
+                            arg2='wx.DEFAULT')
         
     def update_distance_text(self,last_val):
         """Do basically the same thing as the change_units function."""
