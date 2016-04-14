@@ -17,7 +17,7 @@ class Single_window(wx.Frame):
 
     def __init__(self, parent, ID):
         wx.Frame.__init__(self, parent, ID, "Single Channel System",
-                          size=(680,650), style=wx.MINIMIZE_BOX
+                          size=(700,440), style=wx.MINIMIZE_BOX
                           |wx.SYSTEM_MENU|wx.CAPTION|wx.CLOSE_BOX)
         self.setup()
         
@@ -26,72 +26,74 @@ class Single_window(wx.Frame):
         self.statusbar = self.CreateStatusBar()
         pub.subscribe(self.update_feed,'update_feed')   
 
+        # Setup the menus
         menubar = wx.MenuBar()
         fileMenu = wx.Menu()
-        returnMain = fileMenu.Append(wx.ID_ANY, '&Main Menu',
-                                     "Return to Application Main Menu")
-        self.Bind(wx.EVT_MENU, self.return_main_menu, returnMain)
         qmi = wx.MenuItem(fileMenu, 110, '&Quit\tCtrl+Q', "Quit Application")
         fileMenu.AppendItem(qmi)
         self.Bind(wx.EVT_MENU, self.quit_application, qmi)
         editMenu = wx.Menu()
-        # optionsMenu = wx.Menu()
-        # optionsMenu.Append(wx.ID_ANY,'&Configure Wi-Fi')
-        # optionsMenu.Append(wx.ID_ANY,'&Calibrate System')
+        editPref = editMenu.Append(wx.ID_ANY, '&Preferences...',
+                                   "Change speed of sound or data log path")
+        self.Bind(wx.EVT_MENU, self.open_preferences, editPref)
+        configDevice = editMenu.Append(wx.ID_ANY, '&Configure',
+                                       "Configure Measuring Device")
         helpMenu = wx.Menu()
         helpMenu.Append(wx.ID_ANY,'&About')
         menubar.Append(fileMenu, '&File')
-        # menubar.Append(editMenu, '&Edit')
-        # menubar.Append(optionsMenu, '&Options')
+        menubar.Append(editMenu, '&Edit')
         menubar.Append(helpMenu, '&Help')
-        self.SetMenuBar(menubar)
 
+        # Place the menubar and panel for everything below
+        self.SetMenuBar(menubar)
         panel = wx.Panel(self, wx.ID_ANY)
         panel.SetAutoLayout(1)
         font_std = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
         font_stdBold = wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD)
 
-        measureBtn = wx.Button(panel, size=(100,100),label="Measure")
+        # Create measure section buttons and labels
+        measureBtn = wx.Button(panel, size=(110,100),label="Measure")
+        measureBtn.SetFont(wx.Font(14,  wx.SWISS, wx.NORMAL, wx.BOLD))
         str_trgChan = wx.StaticText(panel, -1, "Channel 1 (Speaker 1: Mic 1)")
+        str_trgChan.SetFont(font_stdBold)
         distanceLabel = wx.StaticText(panel, -1, "Distance:")
+        distanceLabel.SetFont(font_std)
         self.distance_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '', size=(84,22),
                                            style=wx.TE_READONLY|wx.ALIGN_RIGHT)
+        self.distance_txtBox.SetFont(font_std)
+        self.distance_txtBox.SetBackgroundColour(wx.Colour(255,250,250))
         self.metrics = ['cm','m']
         self.imperials = ['in','ft']
         self.distanceUnitCombobox = wx.ComboBox(panel, -1, size=(80,27),
                                                 choices=self.metrics,
                                                 style=wx.CB_READONLY)
         self.distanceUnitCombobox.SetValue(self.metrics[0])
-        self.metricUnitRadioBtn = wx.RadioButton(panel, label="Metric",
+        self.distanceUnitCombobox.SetFont(font_std)
+        self.metricBtn = wx.RadioButton(panel, label="Metric",
                                                  style=wx.RB_GROUP)
-        self.metricUnitRadioBtn.SetValue(True)
-        self.imperialUnitRadioBtn = wx.RadioButton(panel, label="Imperial")
+        self.metricBtn.SetValue(True)
+        self.metricBtn.SetFont(font_std)
+        self.imperialBtn = wx.RadioButton(panel, label="Imperial")
+        self.imperialBtn.SetFont(font_std)
         propTimeLabel = wx.StaticText(panel, -1, "Propogation Time:") 
+        propTimeLabel.SetFont(font_std)
         self.propdelay_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(84,22),
                                             style=wx.TE_READONLY
                                             |wx.ALIGN_RIGHT)
+        self.propdelay_txtBox.SetFont(font_std)
+        self.propdelay_txtBox.SetBackgroundColour(wx.Colour(255,250,250))
         propdelayUnitLabel = wx.StaticText(panel, -1, "msec")
+        propdelayUnitLabel.SetFont(font_std)
         gainLabel = wx.StaticText(panel, -1, "Gain:")
+        gainLabel.SetFont(font_std)
         gainTextBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(84,22),
                                   style=wx.TE_READONLY|wx.ALIGN_RIGHT)
-        gainUnitLabel = wx.StaticText(panel, -1, '%')
-        measureBtn.SetFont(wx.Font(14,  wx.SWISS, wx.NORMAL, wx.BOLD))
-        str_trgChan.SetFont(font_stdBold)
-        distanceLabel.SetFont(font_std)
-        self.distance_txtBox.SetFont(font_std)
-        self.distanceUnitCombobox.SetFont(font_std)
-        self.metricUnitRadioBtn.SetFont(font_std)
-        self.imperialUnitRadioBtn.SetFont(font_std)
-        propTimeLabel.SetFont(font_std)
-        self.propdelay_txtBox.SetFont(font_std)
-        propdelayUnitLabel.SetFont(font_std)
-        gainLabel.SetFont(font_std)
         gainTextBox.SetFont(font_std)
-        gainUnitLabel.SetFont(font_std)
-        self.distance_txtBox.SetBackgroundColour(wx.Colour(255,250,250))
-        self.propdelay_txtBox.SetBackgroundColour(wx.Colour(255,250,250))
         gainTextBox.SetBackgroundColour(wx.Colour(255,250,250))
+        gainUnitLabel = wx.StaticText(panel, -1, '%')
+        gainUnitLabel.SetFont(font_std)
 
+        # Map the items created above into their places in the section
         trgMeasureGridBag = wx.GridBagSizer(4,8)
         trgMeasureGridBag.Add(str_trgChan, pos=(0, 0), span=(1,8),
                               flag=wx.TOP|wx.LEFT|wx.RIGHT|wx.BOTTOM
@@ -104,9 +106,9 @@ class Single_window(wx.Frame):
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         trgMeasureGridBag.Add(self.distanceUnitCombobox, pos=(1, 5),
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        trgMeasureGridBag.Add(self.metricUnitRadioBtn, pos=(1, 6),
+        trgMeasureGridBag.Add(self.metricBtn, pos=(1, 6),
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        trgMeasureGridBag.Add(self.imperialUnitRadioBtn, pos=(1, 7),
+        trgMeasureGridBag.Add(self.imperialBtn, pos=(1, 7),
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.Right, border=5)
         trgMeasureGridBag.Add(propTimeLabel, pos=(2, 3),
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
@@ -120,7 +122,7 @@ class Single_window(wx.Frame):
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         trgMeasureGridBag.Add(gainUnitLabel, pos=(3, 5),
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        trgMeasureStaticBox = wx.StaticBox(panel, label= "Trigger Measurement")
+        trgMeasureStaticBox = wx.StaticBox(panel, label="")
         trgMeasureStaticBox.SetFont(font_stdBold)
         trgMeasureBoxSizer = wx.StaticBoxSizer(trgMeasureStaticBox,
                                                wx.HORIZONTAL)
@@ -129,67 +131,12 @@ class Single_window(wx.Frame):
                                     |wx.BOTTOM|wx.RIGHT,
                                border=10)
 
-        self.metricUnitRadioBtn.Bind(wx.EVT_RADIOBUTTON,
-                                     self.change_distance_units)
-        self.imperialUnitRadioBtn.Bind(wx.EVT_RADIOBUTTON,
-                                       self.change_distance_units)
-
+        # Bind the buttons to their respective functions
+        self.metricBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
+        self.imperialBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
         measureBtn.Bind(wx.EVT_BUTTON, self.trig_measure)
 
-        systemID = wx.StaticText(panel, -1, 'System ID:')
-        sysID_field = wx.StaticText(panel, -1, '--------------------')
-        wiFiStatus = wx.StaticText(panel, -1, 'Status:')
-        wiFiStatus_field = wx.StaticText(panel, -1, '--------------------')
-        wiFiSSID = wx.StaticText(panel, -1, 'Wi-Fi SSID:')
-        wiFiSSID_field = wx.StaticText(panel, -1, '--------------------')
-        systemID.SetFont(font_stdBold)
-        sysID_field.SetFont(font_std)
-        wiFiStatus.SetFont(font_stdBold)
-        wiFiStatus_field.SetFont(font_std)
-        wiFiSSID.SetFont(font_stdBold)
-        wiFiSSID_field.SetFont(font_std)
-        sysStatusGridSizer = wx.GridBagSizer(3,3)
-        sysStatusGridSizer.Add(systemID, pos=(0, 0),
-                               flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
-                               border=5)
-        sysStatusGridSizer.Add(sysID_field, pos=(0, 2),
-                               flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM, border=5)
-        sysStatusGridSizer.Add(wiFiStatus, pos=(1,0),
-                               flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
-                               border=5)
-        sysStatusGridSizer.Add(wiFiStatus_field, pos=(1,2),
-                               flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.RIGHT,
-                               border=5)
-        sysStatusGridSizer.Add(wiFiSSID, pos=(2,0),
-                               flag=wx.LEFT|wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM,
-                               border=5)
-        sysStatusGridSizer.Add(wiFiSSID_field, pos=(2,2),
-                               flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.RIGHT,
-                               border=5)
-        sysStatusStaticBox = wx.StaticBox(panel, label="System Status")
-        sysStatusStaticBox.SetFont(font_stdBold)
-        sysStatusBoxSizer = wx.StaticBoxSizer(sysStatusStaticBox, wx.HORIZONTAL)
-        sysStatusBoxSizer.Add(sysStatusGridSizer,
-                              flag=wx.EXPAND|wx.LEFT|wx.TOP|wx.BOTTOM|wx.RIGHT,
-                              border=25) 
-
-        editPrefBtn = wx.Button(panel, size=(160,27),
-                                label="Edit Preferences")
-        configDeviceBtn = wx.Button(panel, size=(160,27),
-                                    label="Configure Device")
-        editPrefBtn.SetFont(font_std)
-        configDeviceBtn.SetFont(font_std)
-        congfiStaticBox = wx.StaticBox(panel, label='')
-        congfiStaticBox.SetFont(font_stdBold)
-        configBoxSizer = wx.StaticBoxSizer(congfiStaticBox, wx.VERTICAL)
-        configBoxSizer.Add(editPrefBtn, flag=wx.EXPAND|wx.LEFT|wx.TOP|wx.RIGHT,
-                           border=20)
-        configBoxSizer.Add(configDeviceBtn,
-                           flag=wx.EXPAND|wx.LEFT|wx.TOP|wx.BOTTOM|wx.RIGHT,
-                           border=20)
-        editPrefBtn.Bind(wx.EVT_BUTTON, self.open_preferences)
-        configDeviceBtn.Bind(wx.EVT_BUTTON, self.open_configuration)
-
+        # Create feed textbox
         self.feed_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(500,120),
                        style=wx.TE_READONLY|wx.ALIGN_LEFT|wx.TE_MULTILINE
                             |wx.TE_RICH2)
@@ -200,14 +147,12 @@ class Single_window(wx.Frame):
         feedBoxSizer = wx.StaticBoxSizer(feedStaticBox, wx.VERTICAL)
         feedBoxSizer.Add(self.feed_txtBox,
                          flag=wx.EXPAND|wx.LEFT|wx.TOP|wx.RIGHT, border=1)
-        sizer = wx.GridBagSizer(3,2)
+
+        # Map The sections onto the panel
+        sizer = wx.GridBagSizer(2,2)
         sizer.Add(trgMeasureBoxSizer, pos=(0,0),span=(1,2),
                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT|wx.BOTTOM, border=10)
-        sizer.Add(sysStatusBoxSizer, pos=(1,0),
-                  flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)
-        sizer.Add(configBoxSizer, pos=(1,1),
-                  flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)
-        sizer.Add(feedBoxSizer, pos=(2,0),span=(1,2),
+        sizer.Add(feedBoxSizer, pos=(1,0),span=(1,2),
                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)
         panel.SetSizerAndFit(sizer)
 
@@ -230,8 +175,8 @@ class Single_window(wx.Frame):
         
     def change_distance_units(self, event):
         """Change the units of measurement and convert the current units."""
-        metricState = self.metricUnitRadioBtn.GetValue()
-        imperialState = self.imperialUnitRadioBtn.GetValue()
+        metricState = self.metricBtn.GetValue()
+        imperialState = self.imperialBtn.GetValue()
 
         if self.distance_txtBox.GetValue() != "":
             last_value = float(self.distance_txtBox.GetValue())
