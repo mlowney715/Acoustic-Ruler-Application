@@ -1,7 +1,7 @@
 import datetime
 import os
 import ConfigParser
-from Aserver import Aserver, DeviceTimeoutError
+from Aserver import Aserial, Aserver, DeviceConnectionError
 
 class Adata:
 
@@ -27,6 +27,9 @@ class Adata:
         self.config.set('socket_info', 'device_address', '127.0.0.1')
         self.config.set('socket_info', 'device_port', '12000')
 
+        self.config.add_section('serial_info')
+        self.config.set('serial_info', 'port_name', '/dev/ttyUSB0')
+
         with open(configname, 'wb') as configfile:
             self.config.write(configfile)
         configfile.close()
@@ -43,6 +46,10 @@ class Adata:
             self.server = Aserver(self.config.get('socket_info', 'device_address'),
                                   int(self.config.get('socket_info',
                                                       'device_port')))
+            try:
+                self.serial = Aserial(self.config.get('serial_info', 'port_name'))
+            except DeviceConnectionError:
+                pass
         except ConfigParser.Error:
             print "Warning: Corrupt config file. Resetting to defaults..."
             os.remove(configname)
@@ -87,20 +94,27 @@ class Adata:
         configfile.close()
         self.path = newpath
 	
-    def measure(self):
+    def measure(self, units):
         """Tell the device to take a measurement and then calculate the
         distance, write to the log file, and return the distance.
         """
         try:
-            delay = self.server.getdelay()
-            distance = self.speed*float(delay)
-            log = open(self.path+"/"+"SingleChannelLog-"+str(datetime.date.today())
+            self.delay = self.serial.getdelay()
+            if units == 'm':
+                distance = self.delay*self.speed
+            elif units == 'cm':
+                distance = self.delay*self.speed*100
+            elif units == 'in':
+                distance = (self.delay*self.speed)*100/2.54
+            else:
+                distance = (self.delay*self.speed)*100/(2.54*12)
+            log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
                        +".txt", "a+")
             log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
-            log.write("Delay: " + str(delay)+" msec\n")
-            log.write("Distance: " + str(distance)+" m\n\n")
+            log.write("Delay: "+str(self.delay)+" msec\n")
+            log.write("Distance: "+str(distance)+" "+units+'\n')
             return distance
-        except DeviceTimeoutError:
+        except DeviceConnectionError:
             raise NoDeviceError
 
     def quit(self):

@@ -1,7 +1,11 @@
 # Auto-generated config file
 ruler.cfg
+
 # ctags "tags" file
 tags
+
+# Measurement log files
+Aruler_log-*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

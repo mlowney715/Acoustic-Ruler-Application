@@ -133,6 +133,8 @@ class Single_window(wx.Frame):
 
         # Bind the buttons to their respective functions
         self.metricBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
+        self.distanceUnitCombobox.Bind(wx.EVT_COMBOBOX,
+                                       self.update_distance_text)
         self.imperialBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
         measureBtn.Bind(wx.EVT_BUTTON, self.trig_measure)
 
@@ -174,12 +176,14 @@ class Single_window(wx.Frame):
         self.Destroy()
         
     def change_distance_units(self, event):
-        """Change the units of measurement and convert the current units."""
+        """Change the units of measurement and convert the current units when
+        the metric or imperial radio buttons are pressed.
+        """
         metricState = self.metricBtn.GetValue()
         imperialState = self.imperialBtn.GetValue()
 
-        if self.distance_txtBox.GetValue() != "":
-            last_value = float(self.distance_txtBox.GetValue())
+        # if self.distance_txtBox.GetValue() != "":
+        last_value = float(self.distance_txtBox.GetValue())
 
         last_units = self.distanceUnitCombobox.GetValue()
 
@@ -198,27 +202,15 @@ class Single_window(wx.Frame):
             if (last_units == "cm" 
                     and current_units == "in"):
                 self.distance_txtBox.SetValue(str((last_value)/2.54))
-            elif (last_units == "cm" 
-                    and current_units == "ft"):
-                self.distance_txtBox.SetValue(str((last_value)* 0.032808))
             elif (last_units == "m" 
                     and current_units == "in"):
-                self.distance_txtBox.SetValue(str((last_value)* 39.370))
-            elif (last_units == "m" 
-                    and current_units == "ft"):
-                self.distance_txtBox.SetValue(str((last_value)/0.3048))
+                self.distance_txtBox.SetValue(str((last_value)*100/2.54))
             elif (last_units == "in" 
                     and current_units == "cm"):
                 self.distance_txtBox.SetValue(str((last_value)*2.54))
-            elif (last_units == "in"
-                    and current_units == "m"):
-                self.distance_txtBox.SetValue(str((last_value)/39.370))
             elif (last_units == "ft"
                     and current_units == "cm"):
-                self.distance_txtBox.SetValue(str((last_value)/0.032808))
-            elif (last_units == "ft"
-                    and current_units == "m"):
-                self.distance_txtBox.SetValue(str((last_value)/3.2808))
+                self.distance_txtBox.SetValue(str((last_value)*12*2.54))
 
     def open_preferences(self, event):
         """Open the Preferences Window when the Open Preference button is
@@ -246,39 +238,48 @@ class Single_window(wx.Frame):
         """
         try:
             units = self.distanceUnitCombobox.GetValue()
-            distance = data.measure()
-            if units == "m":
-                self.distance_txtBox.SetValue('{:0.2f}'.format(distance))
-            elif units == "cm":
-                self.distance_txtBox.SetValue('{:0.2f}'.format((distance)*100))
-            elif units == "in":
-                self.distance_txtBox.SetValue('{:0.2f}'.format((distance)*39.370))
-            elif units == "ft":
-                self.distance_txtBox.SetValue('{:0.2f}'.format((distance)/0.3048))
+            distance = data.measure(units)
             self.distance_txtBox.SetValue(str(distance))
-            self.propdelay_txtBox.SetValue(str(delay*1000.0))
+            self.propdelay_txtBox.SetValue(str(data.delay))
+
+            # Properly format the time of measurement in the live feed:
+            pub.sendMessage('update_feed',
+                            msg="Measurement Taken at "
+                            +str(datetime.datetime.now().time().hour)+":",
+                            arg2='wx.DEFAULT')
+
+            if datetime.datetime.now().time().minute < 10:
+                pub.sendMessage('update_feed', msg="0", arg2='wx.DEFAULT')
+
+            pub.sendMessage('update_feed',
+                            msg=str(datetime.datetime.now().time().minute)+":",
+                            arg2='wx.DEFAULT')
+
+            if datetime.datetime.now().time().second < 10:
+                pub.sendMessage('update_feed', msg="0", arg2='wx.DEFAULT')
+
+            pub.sendMessage('update_feed',
+                             msg=str(datetime.datetime.now().time().second)
+                             +'\n', arg2='wx.DEFAULT')
         except NoDeviceError:
             pub.sendMessage('update_feed',
-                            msg="Error connecting to device.", 
+                            msg="Error Connecting to Device.\n", 
                             arg2='wx.DEFAULT')
         
-    def update_distance_text(self,last_val):
-        """Do basically the same thing as the change_units function."""
-        last_value = self.distance_txtBox.GetValue()
-        last_units = last_val
+    def update_distance_text(self, last_val):
+        """Convert the current units in the distance text-box when new units
+        are selected in the combobox.
+        """
+        last_value = float(self.distance_txtBox.GetValue())
         current_units = self.distanceUnitCombobox.GetValue()
-        if (last_units == "cm" 
-                and current_units == "m"):
-            self.distance_txtBox.SetValue(str((last_value)/100.0))
-        elif (last_units == "m" 
-                and current_units == "cm"):
-            self.distance_txtBox.SetValue(str((last_value)*100.0))
-        elif (last_units == "in" 
-                and current_units == "ft"):
-            self.distance_txtBox.SetValue(str((last_value)*0.083333))
-        elif (last_units == "ft" 
-                and current_units == "in"):
-            self.distance_txtBox.SetValue(str((last_value)*12.000))
+        if current_units == "m":
+            self.distance_txtBox.SetValue(str((last_value)/100.00))
+        elif current_units == "cm":
+            self.distance_txtBox.SetValue(str((last_value)*100.00))
+        elif current_units == "ft":
+            self.distance_txtBox.SetValue(str((last_value)/12.00))
+        elif current_units == "in":
+            self.distance_txtBox.SetValue(str((last_value)*12.00))
 
 class Single_pref(wx.Dialog):
     """Open the preferences window for the Single Channel System."""
