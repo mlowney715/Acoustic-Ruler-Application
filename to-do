@@ -1,0 +1,8 @@
+# 1. Make measureBtn big enough to fit the word in the button are
+# 2. send message to feed each time a measurement is taken
+#     -neaten up the format
+# 3. Convert results when new unit is chosen from dropbox
+# 4. log resuts in the units that are set at the time
+5. Setup device in the config window
+6. Push Wi-Fi info to device and use it wirelessly
+    -setup device to use Wi-Fi info and transmit data wirelessly
