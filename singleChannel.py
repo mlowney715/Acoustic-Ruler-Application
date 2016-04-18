@@ -214,9 +214,7 @@ class Single_window(wx.Frame):
         sizer = wx.GridBagSizer(3,2)
         sizer.Add(trgMeasureBoxSizer, pos=(0,0),span=(1,2),
                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT|wx.BOTTOM, border=10)
-        sizer.Add(sysStatusBoxSizer, pos=(1,0),
-                  flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)
-        sizer.Add(configBoxSizer, pos=(1,1),
+        sizer.Add(sysStatusBoxSizer, pos=(1,0), span=(1,2),
                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)
         sizer.Add(feedBoxSizer, pos=(2,0),span=(1,2),
                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)

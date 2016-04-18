@@ -8,7 +8,7 @@ Speech Technology & Applied Research Corp.  Copyright 2016
 #Main Window
 import wx
 import platform
-from singleChannel import single_deviceconf,single_pref,single_window
+from singleChannel import Single_deviceconf,Single_pref,Single_window
 
 class MainWindow(wx.Frame):
     """Constructor to create a frame for the Acoustic ruler control app Main Menu"""
@@ -147,7 +147,7 @@ class MainWindow(wx.Frame):
     #launchs the single channel app.
     def openSingleChan(self, event):
         self.Destroy()
-        singleChanframe = single_window(parent=None,ID=998)
+        singleChanframe = Single_window(parent=None,ID=998)
         singleChanframe.Centre()
         singleChanframe.Show()
     #end def
