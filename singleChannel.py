@@ -1,13 +1,14 @@
 #!/usr/bin/python
 
 import wx
+import platform
+import glob
 import datetime
 import time
 import sys
 import serial
 
 from wx.lib.pubsub import pub
-from SingleConfig import Single_deviceconf
 from Adata import Adata, NoDeviceError
 
 data = Adata('ruler.cfg')
@@ -17,7 +18,7 @@ class Single_window(wx.Frame):
 
     def __init__(self, parent, ID):
         wx.Frame.__init__(self, parent, ID, "Single Channel System",
-                          size=(700,440), style=wx.MINIMIZE_BOX
+                size=(700,600), style=wx.MINIMIZE_BOX
                           |wx.SYSTEM_MENU|wx.CAPTION|wx.CLOSE_BOX)
         self.setup()
         
@@ -38,6 +39,7 @@ class Single_window(wx.Frame):
         self.Bind(wx.EVT_MENU, self.open_preferences, editPref)
         configDevice = editMenu.Append(wx.ID_ANY, '&Configure',
                                        "Configure Measuring Device")
+        self.Bind(wx.EVT_MENU, self.open_configuration, configDevice)
         helpMenu = wx.Menu()
         helpMenu.Append(wx.ID_ANY,'&About')
         menubar.Append(fileMenu, '&File')
@@ -138,6 +140,21 @@ class Single_window(wx.Frame):
         self.imperialBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
         measureBtn.Bind(wx.EVT_BUTTON, self.trig_measure)
 
+#         # Create Status Panel Labels
+#         UnitLabel = wx.StaticText(panel, -1, "Unit ID:")
+#         UnitLabel.SetFont(font_std)
+# 
+#         statusGridSizer = wx.GridBagSizer(1,1)
+#         statusGridSizer.Add(unitLabel, pos=(0,0),
+#                             flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
+#                             border=5)
+#         statusStaticBox = wx.StaticBox(panel, label="Status")
+#         statusStaticBox.SetFont(font_stdBold)
+#         statusBoxSizer =wx.StaticBoxSizer(statusStaticBox, wx.HORIZONTAL)
+#         statusBoxSizer.Add(statusGridSizer,
+#                            flag=wx.EXPAND|wx.LEFT|wx.TOP|wx.BOTTOM|wx.RIGHT,
+#                            border=25)
+
         # Create feed textbox
         self.feed_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(500,120),
                        style=wx.TE_READONLY|wx.ALIGN_LEFT|wx.TE_MULTILINE
@@ -154,7 +171,9 @@ class Single_window(wx.Frame):
         sizer = wx.GridBagSizer(2,2)
         sizer.Add(trgMeasureBoxSizer, pos=(0,0),span=(1,2),
                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT|wx.BOTTOM, border=10)
-        sizer.Add(feedBoxSizer, pos=(1,0),span=(1,2),
+        #         sizer.Add(statusBoxSizer, pos=(1,0), span=(1,2),
+        #                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)
+        sizer.Add(feedBoxSizer, pos=(2,0),span=(1,2),
                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)
         panel.SetSizerAndFit(sizer)
 
@@ -404,6 +423,161 @@ class Single_pref(wx.Dialog):
         self.MakeModal(False)
         self.Close()
         event.Skip()
+
+class Single_deviceconf(wx.Dialog):
+    """Open the configuration window for a Single-Channel System."""
+
+    def __init__(self, parent, ID):
+        wx.Dialog.__init__(self,parent, ID, "Configure Device",size=(510,350),
+                style=wx.MINIMIZE_BOX| wx.CAPTION |wx.CLOSE_BOX)
+
+        ports = list(self.scan_serial(self))
+        ports.insert(0, "Select Board to connect")
+        # networkList = list(self.network_ports(self))
+        # networkList.insert(0,'Select an Access Point')
+        self.setup(ports)
+
+    def setup(self, myPorts):
+        """Create The Configuration Window"""
+        panel = wx.Panel(self, wx.ID_ANY)
+        panel.SetAutoLayout(1)
+        self.font_std = wx.Font(12,  wx.SWISS, wx.NORMAL, wx.NORMAL)
+
+        serialSys_label = wx.StaticText(panel, -1, "System Available:")
+        serialSys_comboBox = wx.ComboBox(panel, -1, size=(200, 30),
+                                         choices=myPorts, style=wx.CB_READONLY)
+        serialSys_comboBox.SetSelection(0)
+        serialSys_refresh_Btn = wx.Button(panel, size=(100,30),
+                                          label="Refresh")
+
+        network_label = wx.StaticText(panel, -1, "Choose a Network:")
+        network_comboBox = wx.ComboBox(panel,-1, size=(200,30), choices='',
+                                       style=wx.CB_READONLY)
+        network_comboBox.SetSelection(0)
+        network_refresh_Btn = wx.Button(panel, size=(100,30), label="Refresh")
+
+        password_label = wx.StaticText(panel, -1, "Password:")
+        password_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '', size=(200,27),
+                                      style=wx.ALIGN_LEFT|wx.TE_PASSWORD)
+
+        pushBtn = wx.Button(panel, size=(130,30), label="Push")
+        closeBtn = wx.Button(panel, size=(130,30), label="Close")
+        calibrateSysBtn = wx.Button(panel, size=(130,30),label="Calibrate")
+
+        serialSys_label.SetFont(self.font_std)
+        serialSys_comboBox.SetFont(self.font_std)
+        serialSys_refresh_Btn.SetFont(self.font_std)
+        network_label.SetFont(self.font_std)
+        network_comboBox.SetFont(self.font_std)
+        network_refresh_Btn.SetFont(self.font_std)
+        password_label.SetFont(self.font_std)
+        password_txtBox.SetFont(self.font_std)
+        pushBtn.SetFont(self.font_std)
+        closeBtn.SetFont(self.font_std)
+        calibrateSysBtn.SetFont(self.font_std)
+
+        serialCommStaticBox = wx.StaticBox(panel,label="Serial")
+        serialCommStaticBox.SetFont(self.font_std)
+        serialCommBoxSizer = wx.StaticBoxSizer(serialCommStaticBox,
+                                               wx.HORIZONTAL)
+        serialCommBoxSizer.Add(serialSys_label,
+                               flag=wx.LEFT|wx.TOP|wx.BOTTOM|wx.RIGHT,
+                               border=5)
+        serialCommBoxSizer.Add(serialSys_comboBox,
+                               flag=wx.LEFT|wx.TOP|wx.BOTTOM|wx.RIGHT,
+                               border=5)
+        serialCommBoxSizer.Add(serialSys_refresh_Btn,
+                               flag=wx.TOP|wx.BOTTOM|wx.RIGHT|wx.ALIGN_RIGHT,
+                               border=5)
+
+        wirelessGridSizer = wx.GridBagSizer(2,3)
+        wirelessGridSizer.Add(network_label, pos=(0,0),
+                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
+                              border=5)
+        wirelessGridSizer.Add(network_comboBox, pos=(0,1),
+                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
+                              border=5)
+        wirelessGridSizer.Add(network_refresh_Btn, pos=(0,2),
+                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
+                              border=5)
+        wirelessGridSizer.Add(password_label, pos=(1,0),
+                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
+                              border=5)
+        wirelessGridSizer.Add(password_txtBox, pos=(1,1),
+                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
+                              border=5)
+        wirelessGridSizer.Add(pushBtn, pos=(1,2),
+                              flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
+                              border=5)
+
+        wirelessGroupBox = wx.StaticBox(panel, label = "Wireless")
+        wirelessGroupBox.SetFont(self.font_std)
+        wirelessBoxsizer = wx.StaticBoxSizer(wirelessGroupBox, wx.HORIZONTAL)
+        wirelessBoxsizer.Add(wirelessGridSizer, flag=wx.TOP|wx.LEFT|wx.BOTTOM,
+                             border=10)
+
+        btnStaticBox = wx.StaticBox(panel, label="")
+        btnStaticBox.SetFont(self.font_std)
+        btnBoxSizer = wx.StaticBoxSizer(btnStaticBox, wx.HORIZONTAL)
+        btnBoxSizer.Add(calibrateSysBtn, flag=wx.LEFT, border=30)
+        btnBoxSizer.Add(closeBtn, flag=wx.RIGHT, border=5)
+
+        configDevGridSizer = wx.GridBagSizer(3,5)
+        configDevGridSizer.Add(serialCommBoxSizer, pos=(0,0), span=(0,4),
+                               flag=wx.EXPAND|wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM
+                                   |wx.LEFT, border=10)
+        configDevGridSizer.Add(wirelessBoxsizer, pos=(1,0), span=(1,4),
+                               flag=wx.EXPAND|wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM
+                                   |wx.LEFT, border=10)
+        configDevGridSizer.Add(btnBoxSizer, pos=(2,0), span=(2,4),
+                               flag=wx.EXPAND|wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM
+                                   |wx.LEFT, border=10)
+        panel.SetSizerAndFit(configDevGridSizer)
+
+        self.Bind(wx.EVT_CLOSE,self.close_configuration)
+        closeBtn.Bind(wx.EVT_BUTTON, self.close_configuration)
+        calibrateSysBtn.Bind(wx.EVT_BUTTON, self.calibrate_device)
+
+    def close_configuration(self,event):
+        """Close the Configuration Window when the close button is clicked."""
+        self.Destroy()
+        event.Skip()
+        
+    def scan_serial(self,event):
+        """Scan the system for serial ports."""
+        if str(platform.system()) == 'Windows':
+            tempList = ['COM%s' % (i + 1) for i in range(256)]
+        elif str(platform.system()) == 'Linux':
+            tempList = glob.glob('/dev/tty[A-Za-z]*')
+        elif str(platform.system()) == 'Darwin':
+            tempList = glob.glob('/dev/tty.*')
+        else:
+            raise EnvironmentError("Unsupported platform")
+
+        results = []
+        for a_port in tempList:
+            try:
+                s = serial.Serial(a_port)
+                s.close()
+                results.append(a_port)
+            except serial.SerialException:
+                pass
+        return results
+    
+    def calibrate_device(self,event):
+        """Instruct and supervise the device calibration process."""
+        message = """Place Microphone as close as possible to speaker.\n
+        Click 'OK' to start system calibration."""
+        Dlg = wx.MessageDialog(None, message, "Start System Calibration",
+                               wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+        Dlg.SetFont(self.font_std)
+        if Dlg.ShowModal() == wx.ID_OK:
+            bi = wx.BusyInfo("Calibrating System, please wait...", self)
+            time.sleep(1)
+            bi2 = wx.BusyInfo("Done!", self)
+            time.sleep(1)
+            bi.Destroy()
+            bi2.Destroy()
 
 
 if __name__ == '__main__':
