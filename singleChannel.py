@@ -1,6 +1,9 @@
 #!/usr/bin/python
 
 import wx
+import threading
+import thread
+import os
 import platform
 import glob
 import datetime
@@ -9,9 +12,8 @@ import sys
 import serial
 
 from wx.lib.pubsub import pub
-from Adata import Adata, NoDeviceError
+from Adata import Adata, NoDeviceError, StoppableThread
 
-data = Adata('ruler.cfg')
 
 class Single_window(wx.Frame):
     """Open a Single-Channel Window."""
@@ -20,6 +22,7 @@ class Single_window(wx.Frame):
         wx.Frame.__init__(self, parent, ID, "Single Channel System",
                 size=(700,600), style=wx.MINIMIZE_BOX
                           |wx.SYSTEM_MENU|wx.CAPTION|wx.CLOSE_BOX)
+        self.data = Adata('ruler.cfg')
         self.setup()
         
     def setup(self):
@@ -56,6 +59,10 @@ class Single_window(wx.Frame):
         # Create measure section buttons and labels
         measureBtn = wx.Button(panel, size=(110,100),label="Measure")
         measureBtn.SetFont(wx.Font(14,  wx.SWISS, wx.NORMAL, wx.BOLD))
+        playBtn = wx.Button(panel, size=(50,50), label="|>")
+        playBtn.SetFont(font_std)
+        stopBtn = wx.Button(panel, size=(50,50), label="|=|")
+        stopBtn.SetFont(font_std)
         str_trgChan = wx.StaticText(panel, -1, "Channel 1 (Speaker 1: Mic 1)")
         str_trgChan.SetFont(font_stdBold)
         distanceLabel = wx.StaticText(panel, -1, "Distance:")
@@ -96,11 +103,15 @@ class Single_window(wx.Frame):
         gainUnitLabel.SetFont(font_std)
 
         # Map the items created above into their places in the section
-        trgMeasureGridBag = wx.GridBagSizer(4,8)
+        trgMeasureGridBag = wx.GridBagSizer(5,8)
         trgMeasureGridBag.Add(str_trgChan, pos=(0, 0), span=(1,8),
                               flag=wx.TOP|wx.LEFT|wx.RIGHT|wx.BOTTOM
                                    |wx.ALIGN_CENTRE, border=5)
         trgMeasureGridBag.Add(measureBtn, pos=(1, 0), span=(4,3),
+                              flag=wx.TOP|wx.LEFT|wx.Right|wx.BOTTOM, border=5)
+        trgMeasureGridBag.Add(playBtn, pos=(5, 0), span=(1,1),
+                              flag=wx.TOP|wx.LEFT|wx.Right|wx.BOTTOM, border=5)
+        trgMeasureGridBag.Add(stopBtn, pos=(5, 1), span=(1,1),
                               flag=wx.TOP|wx.LEFT|wx.Right|wx.BOTTOM, border=5)
         trgMeasureGridBag.Add(distanceLabel, pos=(1, 3), 
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
@@ -139,21 +150,25 @@ class Single_window(wx.Frame):
                                        self.update_distance_text)
         self.imperialBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
         measureBtn.Bind(wx.EVT_BUTTON, self.trig_measure)
+        
+        playBtn.Bind(wx.EVT_BUTTON, self.trig_repeat)
+        stopBtn.Bind(wx.EVT_BUTTON, self.stop_repeating)
+        
 
-#         # Create Status Panel Labels
-#         UnitLabel = wx.StaticText(panel, -1, "Unit ID:")
-#         UnitLabel.SetFont(font_std)
-# 
-#         statusGridSizer = wx.GridBagSizer(1,1)
-#         statusGridSizer.Add(unitLabel, pos=(0,0),
-#                             flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
-#                             border=5)
-#         statusStaticBox = wx.StaticBox(panel, label="Status")
-#         statusStaticBox.SetFont(font_stdBold)
-#         statusBoxSizer =wx.StaticBoxSizer(statusStaticBox, wx.HORIZONTAL)
-#         statusBoxSizer.Add(statusGridSizer,
-#                            flag=wx.EXPAND|wx.LEFT|wx.TOP|wx.BOTTOM|wx.RIGHT,
-#                            border=25)
+        # Create Status Panel Labels
+        UnitLabel = wx.StaticText(panel, -1, "Unit ID:")
+        UnitLabel.SetFont(font_std)
+
+        statusGridSizer = wx.GridBagSizer(1,1)
+        statusGridSizer.Add(UnitLabel, pos=(0,0),
+                            flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
+                            border=5)
+        statusStaticBox = wx.StaticBox(panel, label="Status")
+        statusStaticBox.SetFont(font_stdBold)
+        statusBoxSizer =wx.StaticBoxSizer(statusStaticBox, wx.HORIZONTAL)
+        statusBoxSizer.Add(statusGridSizer,
+                           flag=wx.EXPAND|wx.LEFT|wx.TOP|wx.BOTTOM|wx.RIGHT,
+                           border=25)
 
         # Create feed textbox
         self.feed_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(500,120),
@@ -171,8 +186,8 @@ class Single_window(wx.Frame):
         sizer = wx.GridBagSizer(2,2)
         sizer.Add(trgMeasureBoxSizer, pos=(0,0),span=(1,2),
                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT|wx.BOTTOM, border=10)
-        #         sizer.Add(statusBoxSizer, pos=(1,0), span=(1,2),
-        #                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)
+        sizer.Add(statusBoxSizer, pos=(1,0), span=(1,2),
+                  flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)
         sizer.Add(feedBoxSizer, pos=(2,0),span=(1,2),
                   flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT, border=10)
         panel.SetSizerAndFit(sizer)
@@ -180,7 +195,7 @@ class Single_window(wx.Frame):
     def quit_application(self, event):
         """Quit The Application when File->Quit is clicked."""
         self.Close()
-        data.quit()
+        self.data.quit()
 
     def update_feed(self,msg,arg2=None):
         """Update the live feed at the bottom of the window when something
@@ -251,15 +266,32 @@ class Single_window(wx.Frame):
         configDevFrame.ShowModal()
         configDevFrame.Destroy()
  
+    def trig_repeat(self, event):
+        try:
+            self.rep_thread = StoppableThread(self.data)
+            self.rep_thread.start()
+
+        except NoDeviceError:
+            pub.sendMessage('update_feed',
+                            msg="Error Connecting to Device.\n", 
+                            arg2='wx.DEFAULT')
+
+    def stop_repeating(self, event):
+        self.rep_thread.stop()
+        pub.sendMessage('update_feed',
+                        msg=str(self.rep_thread.count)+" Measurements Taken.\n",
+                        arg2='wx.DEFAULT')
+        self.rep_thread.join()
+
     def trig_measure(self,event):
         """Trigger a measurement and display the results in the proper
         units.
         """
         try:
             units = self.distanceUnitCombobox.GetValue()
-            distance = data.measure(units)
+            distance, delay = self.data.measure(units)
             self.distance_txtBox.SetValue(str(distance))
-            self.propdelay_txtBox.SetValue(str(data.delay))
+            self.propdelay_txtBox.SetValue(str(delay))
 
             # Properly format the time of measurement in the live feed:
             pub.sendMessage('update_feed',
@@ -285,6 +317,7 @@ class Single_window(wx.Frame):
                             msg="Error Connecting to Device.\n", 
                             arg2='wx.DEFAULT')
         
+
     def update_distance_text(self, last_val):
         """Convert the current units in the distance text-box when new units
         are selected in the combobox.
@@ -306,6 +339,7 @@ class Single_pref(wx.Dialog):
     def __init__(self,parent,ID):
         wx.Dialog.__init__(self,parent, ID, "Edit Preferences", size=(670,300),
                            style=wx.MINIMIZE_BOX|wx.CAPTION|wx.CLOSE_BOX)
+        self.data = Adata('ruler.cfg')
         self.setup()
 
         
@@ -315,12 +349,12 @@ class Single_pref(wx.Dialog):
         font_std = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 
         str_speedSoundLabel = wx.StaticText(panel, -1, 'Speed of Sound:')
-        self.speedSound_txtBox = wx.TextCtrl(panel, wx.ID_ANY, str(data.speed),
+        self.speedSound_txtBox = wx.TextCtrl(panel, wx.ID_ANY, str(self.data.speed),
                                              size=(84,22),
                                              style=wx.ALIGN_RIGHT)
         str_speedLabel = wx.StaticText(panel, -1, 'm/s')
         locLabel = wx.StaticText(panel, -1, 'Data Logger Location:')
-        self.path_txtBox = wx.TextCtrl(panel, wx.ID_ANY, data.path,
+        self.path_txtBox = wx.TextCtrl(panel, wx.ID_ANY, self.data.path,
                                        size=(500,22),
                                        style=wx.TE_READONLY|wx.ALIGN_LEFT)
         browseBtn = wx.Button(panel, size=(100,27), label="Browse")
@@ -404,17 +438,17 @@ class Single_pref(wx.Dialog):
         newspeed = float(self.speedSound_txtBox.GetValue())
         newpath = self.path_txtBox.GetValue()
         try:
-            if newspeed != data.speed:
-                data.changespeed(newspeed)
+            if newspeed != self.data.speed:
+                self.data.changespeed(newspeed)
                 pub.sendMessage('update_feed',
                                 msg="Speed of Sound changed to: "
-                                   +str(data.speed)+"m/s\n",
+                                   +str(self.data.speed)+" m/s\n",
                                 arg2='wx.DEFAULT')
-            if newpath != data.path:
-                data.changepath(newpath)
+            if newpath != self.data.path:
+                self.data.changepath(newpath)
                 pub.sendMessage('update_feed',
                                 msg="Log File Path changed to: "
-                                   +str(data.path)+"\n",
+                                   +str(self.data.path)+"\n",
                                 arg2='wx.DEFAULT')
         except ValueError:
             pub.sendMessage('update_feed',
@@ -431,13 +465,11 @@ class Single_deviceconf(wx.Dialog):
         wx.Dialog.__init__(self,parent, ID, "Configure Device",size=(510,350),
                 style=wx.MINIMIZE_BOX| wx.CAPTION |wx.CLOSE_BOX)
 
-        ports = list(self.scan_serial(self))
-        ports.insert(0, "Select Board to connect")
         # networkList = list(self.network_ports(self))
         # networkList.insert(0,'Select an Access Point')
-        self.setup(ports)
+        self.setup()
 
-    def setup(self, myPorts):
+    def setup(self):
         """Create The Configuration Window"""
         panel = wx.Panel(self, wx.ID_ANY)
         panel.SetAutoLayout(1)
@@ -445,7 +477,8 @@ class Single_deviceconf(wx.Dialog):
 
         serialSys_label = wx.StaticText(panel, -1, "System Available:")
         serialSys_comboBox = wx.ComboBox(panel, -1, size=(200, 30),
-                                         choices=myPorts, style=wx.CB_READONLY)
+                                         choices=list(self.scan_serial(self)),
+                                         style=wx.CB_READONLY)
         serialSys_comboBox.SetSelection(0)
         serialSys_refresh_Btn = wx.Button(panel, size=(100,30),
                                           label="Refresh")

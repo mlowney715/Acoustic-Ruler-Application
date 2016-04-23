@@ -3,6 +3,8 @@
 #     -neaten up the format
 # 3. Convert results when new unit is chosen from dropbox
 # 4. log resuts in the units that are set at the time
+FINISH PLAY/STOP
 5. Setup device in the config window
 6. Push Wi-Fi info to device and use it wirelessly
     -setup device to use Wi-Fi info and transmit data wirelessly
+7. Make a folder to store logs in

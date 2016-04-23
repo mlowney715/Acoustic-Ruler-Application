@@ -1,7 +1,9 @@
 import datetime
+import threading
+import time
 import os
 import ConfigParser
-from Aserver import Aserial, Aserver, DeviceConnectionError
+from Aserver import Aserver, DeviceConnectionError
 
 class Adata:
 
@@ -21,11 +23,11 @@ class Adata:
         self.config.set('phys_env', 'speed_sound', '343')
 
         self.config.add_section('data_env')
-        self.config.set('data_env', 'log_path', './')
+        self.config.set('data_env', 'log_path', './logs')
 
-        self.config.add_section('socket_info')
-        self.config.set('socket_info', 'device_address', '127.0.0.1')
-        self.config.set('socket_info', 'device_port', '12000')
+        # self.config.add_section('socket_info')
+        # self.config.set('socket_info', 'device_address', '127.0.0.1')
+        # self.config.set('socket_info', 'device_port', '12000')
 
         self.config.add_section('serial_info')
         self.config.set('serial_info', 'port_name', '/dev/ttyUSB0')
@@ -43,13 +45,12 @@ class Adata:
             self.config.read(configname)
             self.speed = self.config.getfloat('phys_env', 'speed_sound')
             self.path = self.config.get('data_env', 'log_path')
-            self.server = Aserver(self.config.get('socket_info', 'device_address'),
-                                  int(self.config.get('socket_info',
-                                                      'device_port')))
+            self.changepath(self.path)
+            serialPort = self.config.get('serial_info', 'port_name')
             try:
-                self.serial = Aserial(self.config.get('serial_info', 'port_name'))
+                self.server = Aserver(serialPort)
             except DeviceConnectionError:
-                pass
+                self.server = 'NONE'
         except ConfigParser.Error:
             print "Warning: Corrupt config file. Resetting to defaults..."
             os.remove(configname)
@@ -98,29 +99,80 @@ class Adata:
         """Tell the device to take a measurement and then calculate the
         distance, write to the log file, and return the distance.
         """
-        try:
-            self.delay = self.serial.getdelay()
+        if (self.server != 'NONE'):
+            delay = self.server.getdelay()
             if units == 'm':
-                distance = self.delay*self.speed
+                distance = delay*self.speed
             elif units == 'cm':
-                distance = self.delay*self.speed*100
+                distance = delay*self.speed*100
             elif units == 'in':
-                distance = (self.delay*self.speed)*100/2.54
+                distance = (delay*self.speed)*100/2.54
             else:
-                distance = (self.delay*self.speed)*100/(2.54*12)
+                distance = (delay*self.speed)*100/(2.54*12)
             log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
                        +".txt", "a+")
             log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
-            log.write("Delay: "+str(self.delay)+" msec\n")
+            log.write("Delay: "+str(delay)+" msec\n")
             log.write("Distance: "+str(distance)+" "+units+'\n')
-            return distance
-        except DeviceConnectionError:
+            return distance, delay
+        else:
             raise NoDeviceError
+
+
+    def repeated_measure(self):
+        if (self.server != 'NONE'):
+            count = 0
+            while count < 3:
+                delay = self.server.getdelay()
+                distance = delay*self.speed
+                log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
+                           +".txt", "a+")
+                log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
+                log.write("Delay: "+str(delay)+" msec\n")
+                log.write("Distance: "+str(distance)+" m\n")
+                count = count+1
+            return count
+        else:
+            # raise NoDeviceError
+            count = 0
+            while count < 3:
+                delay = 10.0
+                distance = delay*self.speed
+                log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
+                           +".txt", "a+")
+                log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
+                log.write("Delay: "+str(delay)+" msec\n")
+                log.write("Distance: "+str(distance)+" m\n")
+                count = count+1
+                time.sleep(1)
+            return count
 
     def quit(self):
         """Close any sockets or serial ports that have been opened."""
-        self.server.closeSocket()
+        self.server.closeSerial()
         
+class StoppableThread(threading.Thread):
+    """Thread with a stop() condition. 
+    http://stackoverflow.com/questions/323972/is-there-any-way-to-kill-a-thread-in-python
+    """
+
+    def __init__(self, data):
+        threading.Thread.__init__(self)
+        self.data = data
+        self._stop = threading.Event()
+
+    def run(self):
+        self.count = 0
+        while(not self.stopped()):
+            self.data.measure('m')
+            self.count = self.count + 1
+            time.sleep(1)
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.is_set()
 
 class NoDeviceError(Exception):
     pass

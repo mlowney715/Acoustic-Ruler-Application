@@ -4,17 +4,31 @@ import serial
 
 class Aserver:
 
-    def __init__(self, serverName, serverPort):
+    def __init__(self, serialName):
+        try:
+            self.ser = serial.Serial(serialName, timeout=1)
+        except serial.serialutil.SerialException:
+             raise DeviceConnectionError
+
+    def getdelay(self):
+        self.ser.write(b'm')
+        bin_delay = self.ser.read(16)
+        bin_delay = '\0'*(4-len(bin_delay)) + bin_delay
+        delay = struct.unpack('f', bin_delay)[0]
+        return delay
+
+    def go_wireless(self, serverName, serverPort):
         self.serverName = serverName
         self.serverPort = serverPort
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
 
-    def getdelay(self):
+    def get_wireless_delay(self):
         self.clientSocket.settimeout(1)
         try:
             cue = 'm'
-            self.clientSocket.sendto(cue,(self.serverName, self.serverPort))
-            delay, serverAddress = self.clientSocket.recvfrom(2048)	# 2048 buffer size
+            self.clientSocket.sendto(cue,(self.serverName,
+                                          self.serverPort))
+            delay, serverAddress = self.clientSocket.recvfrom(2048)
             return float(delay)
         except:
             raise DeviceConnectionError
@@ -22,24 +36,8 @@ class Aserver:
     def closeSocket(self):
         self.clientSocket.close()
 
-
-class Aserial:
-
-    def __init__(self, portName):
-        try:
-            self.ser = serial.Serial(portName, timeout=1)
-        except serial.serialutil.SerialException:
-            raise DeviceConnectionError
-
-    def getdelay(self):
-        try:
-            self.ser.write(b'm')
-            bin_delay = self.ser.read(16)
-            delay = struct.unpack('f', bin_delay)[0]
-            return delay
-        except struct.error:
-            raise DeviceConnectionError
-
+    def closeSerial(self):
+        self.ser.close()
 
 class DeviceConnectionError(Exception):
     pass
