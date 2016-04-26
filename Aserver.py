@@ -13,10 +13,11 @@ class Aserver:
         #              raise DeviceConnectionError
         self.serverName = serverName
         self.serverPort = serverPort
-        scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
-        scheme.save()
-        scheme.activate()
+#         scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
+#         scheme.save()
+#         scheme.activate()
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
+        self.wireless = True
 
 
     def getdelay(self):
@@ -50,13 +51,13 @@ class Aserver:
         a UDP socket
         """
         # serverName is the IP address of the Raspberry Pi over the network
-        self.serverName = serverName
-        self.serverPort = serverPort
-        scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
-        scheme.save()
-        scheme.activate()
-        self.clientSocket = socket(AF_INET, SOCK_DGRAM)
-        self.wireless = True
+#         self.serverName = serverName
+#         self.serverPort = serverPort
+#         scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
+#         scheme.save()
+#         scheme.activate()
+#         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
+#         self.wireless = True
 
     def get_wireless_delay(self):
         self.clientSocket.settimeout(1)

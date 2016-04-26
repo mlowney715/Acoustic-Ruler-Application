@@ -151,8 +151,8 @@ class Single_window(wx.Frame):
         self.imperialBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
         measureBtn.Bind(wx.EVT_BUTTON, self.trig_measure)
         
-        playBtn.Bind(wx.EVT_BUTTON, self.trig_repeat)
-        stopBtn.Bind(wx.EVT_BUTTON, self.stop_repeating)
+#        playBtn.Bind(wx.EVT_BUTTON, self.trig_repeat)
+#        stopBtn.Bind(wx.EVT_BUTTON, self.stop_repeating)
         
 
         # Create Status Panel Labels
@@ -266,22 +266,22 @@ class Single_window(wx.Frame):
         configDevFrame.ShowModal()
         configDevFrame.Destroy()
  
-    def trig_repeat(self, event):
-        try:
-            self.rep_thread = StoppableThread(self.data)
-            self.rep_thread.start()
-
-        except NoDeviceError:
-            pub.sendMessage('update_feed',
-                            msg="Error Connecting to Device.\n", 
-                            arg2='wx.DEFAULT')
-
-    def stop_repeating(self, event):
-        self.rep_thread.stop()
-        pub.sendMessage('update_feed',
-                        msg=str(self.rep_thread.count)+" Measurements Taken.\n",
-                        arg2='wx.DEFAULT')
-        self.rep_thread.join()
+#     def trig_repeat(self, event):
+#         try:
+#             self.rep_thread = StoppableThread(self.data)
+#             self.rep_thread.start()
+# 
+#         except NoDeviceError:
+#             pub.sendMessage('update_feed',
+#                             msg="Error Connecting to Device.\n", 
+#                             arg2='wx.DEFAULT')
+# 
+#     def stop_repeating(self, event):
+#         self.rep_thread.stop()
+#         pub.sendMessage('update_feed',
+#                         msg=str(self.rep_thread.count)+" Measurements Taken.\n",
+#                         arg2='wx.DEFAULT')
+#         self.rep_thread.join()
 
     def trig_measure(self,event):
         """Trigger a measurement and display the results in the proper
@@ -488,7 +488,7 @@ class Single_deviceconf(wx.Dialog):
                                        style=wx.CB_READONLY)
         self.network_comboBox.SetSelection(0)
         network_refresh_Btn = wx.Button(panel, size=(100,30), label="Refresh")
-        network_refresh_Btn.Bind(wx.EVT_BUTTON, self.setup)
+#         network_refresh_Btn.Bind(wx.EVT_BUTTON, self.setup)
 
         password_label = wx.StaticText(panel, -1, "Password:")
         self.password_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '', size=(200,27),
@@ -499,7 +499,7 @@ class Single_deviceconf(wx.Dialog):
         closeBtn = wx.Button(panel, size=(130,30), label="Close")
         closeBtn.Bind(wx.EVT_BUTTON, self.close_configuration)
         calibrateSysBtn = wx.Button(panel, size=(130,30),label="Calibrate")
-        calibrateSysBtn.Bind(wx.EVT_BUTTON, self.calibrate_device)
+#         calibrateSysBtn.Bind(wx.EVT_BUTTON, self.calibrate_device)
 
         serialSys_label.SetFont(self.font_std)
         serialSys_comboBox.SetFont(self.font_std)

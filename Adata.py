@@ -50,7 +50,7 @@ class Adata:
             self.changepath(self.path)
             serialPort = self.config.get('serial_info', 'port_name')
             try:
-                self.server = Aserver(serialPort)
+               self.server = Aserver(serialPort)
             except DeviceConnectionError:
                 self.server = 'NONE'
         except ConfigParser.Error:
@@ -120,45 +120,44 @@ class Adata:
         else:
             raise NoDeviceError
 
+#     def repeated_measure(self):
+#         if (self.server != 'NONE'):
+#             count = 0
+#             while count < 3:
+#                 delay = self.server.getdelay()
+#                 distance = delay*self.speed
+#                 log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
+#                            +".txt", "a+")
+#                 log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
+#                 log.write("Delay: "+str(delay)+" msec\n")
+#                 log.write("Distance: "+str(distance)+" m\n")
+#                 count = count+1
+#             return count
+#         else:
+#             # raise NoDeviceError
+#             count = 0
+#             while count < 3:
+#                 delay = 10.0
+#                 distance = delay*self.speed
+#                 log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
+#                            +".txt", "a+")
+#                 log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
+#                 log.write("Delay: "+str(delay)+" msec\n")
+#                 log.write("Distance: "+str(distance)+" m\n")
+#                 count = count+1
+#                 time.sleep(1)
+#             return count
 
-    def repeated_measure(self):
-        if (self.server != 'NONE'):
-            count = 0
-            while count < 3:
-                delay = self.server.getdelay()
-                distance = delay*self.speed
-                log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
-                           +".txt", "a+")
-                log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
-                log.write("Delay: "+str(delay)+" msec\n")
-                log.write("Distance: "+str(distance)+" m\n")
-                count = count+1
-            return count
-        else:
-            # raise NoDeviceError
-            count = 0
-            while count < 3:
-                delay = 10.0
-                distance = delay*self.speed
-                log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
-                           +".txt", "a+")
-                log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
-                log.write("Delay: "+str(delay)+" msec\n")
-                log.write("Distance: "+str(distance)+" m\n")
-                count = count+1
-                time.sleep(1)
-            return count
+    # def get_networks(self):
+     #    return ssids = self.server.get_networks()
 
-    def get_networks(self):
-        return ssids = self.server.get_networks()
-
-    def go_wireless(self, ssid, passkey):
-        self.server.go_wireless('192.168.1.3', 12000, ssid, passkey)
+#    def go_wireless(self, ssid, passkey):
+#        self.server.go_wireless('192.168.1.3', 12000, ssid, passkey)
 
 
-    def quit(self):
-        """Close any sockets or serial ports that have been opened."""
-        self.server.closeSerial()
+#    def quit(self):
+#        """Close any sockets or serial ports that have been opened."""
+#        self.server.closeSerial()
         
 class StoppableThread(threading.Thread):
     """Thread with a stop() condition. 
