@@ -465,8 +465,7 @@ class Single_deviceconf(wx.Dialog):
         wx.Dialog.__init__(self,parent, ID, "Configure Device",size=(510,350),
                 style=wx.MINIMIZE_BOX| wx.CAPTION |wx.CLOSE_BOX)
 
-        # networkList = list(self.network_ports(self))
-        # networkList.insert(0,'Select an Access Point')
+        self.data = Adata('ruler.cfg')
         self.setup()
 
     def setup(self):
@@ -484,27 +483,32 @@ class Single_deviceconf(wx.Dialog):
                                           label="Refresh")
 
         network_label = wx.StaticText(panel, -1, "Choose a Network:")
-        network_comboBox = wx.ComboBox(panel,-1, size=(200,30), choices='',
+        self.network_comboBox = wx.ComboBox(panel, -1, size=(200,30),
+                                       choices=list(self.scan_wifi(self)),
                                        style=wx.CB_READONLY)
-        network_comboBox.SetSelection(0)
+        self.network_comboBox.SetSelection(0)
         network_refresh_Btn = wx.Button(panel, size=(100,30), label="Refresh")
+        network_refresh_Btn.Bind(wx.EVT_BUTTON, self.setup)
 
         password_label = wx.StaticText(panel, -1, "Password:")
-        password_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '', size=(200,27),
+        self.password_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '', size=(200,27),
                                       style=wx.ALIGN_LEFT|wx.TE_PASSWORD)
 
-        pushBtn = wx.Button(panel, size=(130,30), label="Push")
+        pushBtn = wx.Button(panel, size=(100,30), label="Push")
+        pushBtn.bind(wx.EVT_BUTTON, self.push_wireless)
         closeBtn = wx.Button(panel, size=(130,30), label="Close")
+        closeBtn.Bind(wx.EVT_BUTTON, self.close_configuration)
         calibrateSysBtn = wx.Button(panel, size=(130,30),label="Calibrate")
+        calibrateSysBtn.Bind(wx.EVT_BUTTON, self.calibrate_device)
 
         serialSys_label.SetFont(self.font_std)
         serialSys_comboBox.SetFont(self.font_std)
         serialSys_refresh_Btn.SetFont(self.font_std)
         network_label.SetFont(self.font_std)
-        network_comboBox.SetFont(self.font_std)
+        self.network_comboBox.SetFont(self.font_std)
         network_refresh_Btn.SetFont(self.font_std)
         password_label.SetFont(self.font_std)
-        password_txtBox.SetFont(self.font_std)
+        self.password_txtBox.SetFont(self.font_std)
         pushBtn.SetFont(self.font_std)
         closeBtn.SetFont(self.font_std)
         calibrateSysBtn.SetFont(self.font_std)
@@ -527,7 +531,7 @@ class Single_deviceconf(wx.Dialog):
         wirelessGridSizer.Add(network_label, pos=(0,0),
                               flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
                               border=5)
-        wirelessGridSizer.Add(network_comboBox, pos=(0,1),
+        wirelessGridSizer.Add(self.network_comboBox, pos=(0,1),
                               flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
                               border=5)
         wirelessGridSizer.Add(network_refresh_Btn, pos=(0,2),
@@ -536,7 +540,7 @@ class Single_deviceconf(wx.Dialog):
         wirelessGridSizer.Add(password_label, pos=(1,0),
                               flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
                               border=5)
-        wirelessGridSizer.Add(password_txtBox, pos=(1,1),
+        wirelessGridSizer.Add(self.password_txtBox, pos=(1,1),
                               flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
                               border=5)
         wirelessGridSizer.Add(pushBtn, pos=(1,2),
@@ -568,15 +572,13 @@ class Single_deviceconf(wx.Dialog):
         panel.SetSizerAndFit(configDevGridSizer)
 
         self.Bind(wx.EVT_CLOSE,self.close_configuration)
-        closeBtn.Bind(wx.EVT_BUTTON, self.close_configuration)
-        calibrateSysBtn.Bind(wx.EVT_BUTTON, self.calibrate_device)
 
     def close_configuration(self,event):
         """Close the Configuration Window when the close button is clicked."""
         self.Destroy()
         event.Skip()
         
-    def scan_serial(self,event):
+    def scan_serial(self, event):
         """Scan the system for serial ports."""
         if str(platform.system()) == 'Windows':
             tempList = ['COM%s' % (i + 1) for i in range(256)]
@@ -597,7 +599,22 @@ class Single_deviceconf(wx.Dialog):
                 pass
         return results
     
-    def calibrate_device(self,event):
+    def scan_wifi(self, event):
+        """Scan the wireless access points to create a list of potential
+        connections
+        """
+        networks = self.data.get_networks()
+        return networks
+
+    def push_wireless(self, event):
+        """Push the network SSID and passkey to the device so the device can be
+        disconnected from serial.
+        """
+        ssid = self.network_comboBox.GetValue()
+        passkey = self.password_txtBox.GetValue()
+        self.data.go_wireless(ssid, passkey)
+
+    def calibrate_device(self, event):
         """Instruct and supervise the device calibration process."""
         message = """Place Microphone as close as possible to speaker.\n
         Click 'OK' to start system calibration."""

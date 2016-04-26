@@ -1,4 +1,6 @@
 import datetime
+from wifi import Cell, Scheme
+from operator import attrgetter
 import threading
 import time
 import os
@@ -146,6 +148,13 @@ class Adata:
                 count = count+1
                 time.sleep(1)
             return count
+
+    def get_networks(self):
+        return ssids = self.server.get_networks()
+
+    def go_wireless(self, ssid, passkey):
+        self.server.go_wireless('192.168.1.3', 12000, ssid, passkey)
+
 
     def quit(self):
         """Close any sockets or serial ports that have been opened."""
