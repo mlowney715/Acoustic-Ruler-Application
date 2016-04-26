@@ -5,7 +5,7 @@ import threading
 import time
 import os
 import ConfigParser
-from Aserver import Aserver, DeviceConnectionError
+from server_ar import Aserver, DeviceConnectionError
 
 class Adata:
 
@@ -52,7 +52,7 @@ class Adata:
             try:
                self.server = Aserver(serialPort)
             except DeviceConnectionError:
-                self.server = 'NONE'
+                self.connection = False
         except ConfigParser.Error:
             print "Warning: Corrupt config file. Resetting to defaults..."
             os.remove(configname)
@@ -101,8 +101,8 @@ class Adata:
         """Tell the device to take a measurement and then calculate the
         distance, write to the log file, and return the distance.
         """
-        if (self.server != 'NONE'):
-            delay = self.server.getdelay()
+        if self.connection is not False:
+            delay = self.server.get_delay()
             if units == 'm':
                 distance = delay*self.speed
             elif units == 'cm':
@@ -120,44 +120,20 @@ class Adata:
         else:
             raise NoDeviceError
 
-#     def repeated_measure(self):
-#         if (self.server != 'NONE'):
-#             count = 0
-#             while count < 3:
-#                 delay = self.server.getdelay()
-#                 distance = delay*self.speed
-#                 log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
-#                            +".txt", "a+")
-#                 log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
-#                 log.write("Delay: "+str(delay)+" msec\n")
-#                 log.write("Distance: "+str(distance)+" m\n")
-#                 count = count+1
-#             return count
-#         else:
-#             # raise NoDeviceError
-#             count = 0
-#             while count < 3:
-#                 delay = 10.0
-#                 distance = delay*self.speed
-#                 log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
-#                            +".txt", "a+")
-#                 log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
-#                 log.write("Delay: "+str(delay)+" msec\n")
-#                 log.write("Distance: "+str(distance)+" m\n")
-#                 count = count+1
-#                 time.sleep(1)
-#             return count
+    def get_networks(self):
+        """Return a list of SSIDs to populate the list."""
+        return ssids = self.server.get_networks()
 
-    # def get_networks(self):
-     #    return ssids = self.server.get_networks()
+    def go_wireless(self, ssid, passkey):
+        """Setup the server for a wireless connection and connect the client
+        application to the network.
+        """
+        self.server.go_wireless('192.168.1.3', 12000, ssid, passkey)
 
-#    def go_wireless(self, ssid, passkey):
-#        self.server.go_wireless('192.168.1.3', 12000, ssid, passkey)
-
-
-#    def quit(self):
-#        """Close any sockets or serial ports that have been opened."""
-#        self.server.closeSerial()
+    def quit(self):
+       """Close any sockets or serial ports that have been opened."""
+       if self.connection != 
+        self.server.closeSerial()
         
 class StoppableThread(threading.Thread):
     """Thread with a stop() condition. 

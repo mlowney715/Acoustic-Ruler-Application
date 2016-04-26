@@ -12,7 +12,7 @@ import sys
 import serial
 
 from wx.lib.pubsub import pub
-from Adata import Adata, NoDeviceError, StoppableThread
+from data_ar import Adata, NoDeviceError, StoppableThread
 
 
 class Single_window(wx.Frame):

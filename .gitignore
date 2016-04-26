@@ -5,6 +5,7 @@ ruler.cfg
 tags
 
 # Measurement log files
+logs/
 Aruler_log-*
 
 # Byte-compiled / optimized / DLL files

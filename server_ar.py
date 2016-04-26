@@ -6,23 +6,18 @@ from wifi import Cell, Scheme
 class Aserver:
 
     def __init__(self, serialName):
-        #         self.wireless = False
-        #         try:
-        #             self.ser = serial.Serial(serialName, timeout=1)
-        #         except serial.serialutil.SerialException:
-        #              raise DeviceConnectionError
-        self.serverName = serverName
-        self.serverPort = serverPort
-#         scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
-#         scheme.save()
-#         scheme.activate()
-        self.clientSocket = socket(AF_INET, SOCK_DGRAM)
-        self.wireless = True
+        self.wireless = False
+        try:
+            self.ser = serial.Serial(serialName, timeout=1)
+        except serial.serialutil.SerialException:
+             raise DeviceConnectionError
 
-
-    def getdelay(self):
+    def get_delay(self):
+        """Take a measurement from the device using serial unless a wireless
+        scheme is set up.
+        """
         self.ser.write(b'm')
-        if self.wireless == False:
+        if self.wireless is False:
             bin_delay = self.ser.read(16)
             bin_delay = '\0'*(4-len(bin_delay)) + bin_delay
             delay = struct.unpack('f', bin_delay)[0]
@@ -31,6 +26,9 @@ class Aserver:
         return delay
 
     def get_networks(self):
+        """Form a list of available Wi-Fi cells, keeping only the best quality
+        Cell out of any duplicates. Return a list of SSIDs, sorted by quality.
+        """
         unfiltered = Cell.all('wlan0')
         unfiltered_sorted = sorted(unfiltered, key = attrgetter('quality'),
                                    reverse=True)
@@ -51,15 +49,20 @@ class Aserver:
         a UDP socket
         """
         # serverName is the IP address of the Raspberry Pi over the network
-#         self.serverName = serverName
-#         self.serverPort = serverPort
-#         scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
-#         scheme.save()
-#         scheme.activate()
-#         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
-#         self.wireless = True
+        self.serverName = serverName
+        self.serverPort = serverPort
+        self.clientSocket = socket(AF_INET, SOCK_DGRAM)
+
+        # A scheme is needed to connect to a Wi-Fi access point.
+        scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
+        scheme.save()
+        scheme.activate()
+        self.wireless = True
 
     def get_wireless_delay(self):
+        """Cue a measurement using sockets over the wireless connection.
+        Returns a floating point number as the measured delay.
+        """
         self.clientSocket.settimeout(1)
         try:
             cue = 'm'
@@ -71,9 +74,15 @@ class Aserver:
             raise DeviceConnectionError
 
     def closeSocket(self):
+        """Close the UDP socket opened to request a measurement over a wireless
+        connection.
+        """
         self.clientSocket.close()
 
     def closeSerial(self):
+        """Close the serial port that was opened to request a measurement over
+        a serial connection.
+        """
         self.ser.close()
 
 class DeviceConnectionError(Exception):
