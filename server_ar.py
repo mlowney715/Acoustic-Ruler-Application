@@ -3,7 +3,7 @@ import struct
 import serial
 from wifi import Cell, Scheme
 
-class Aserver:
+class AServer:
 
     def __init__(self, serialName):
         self.wireless = False

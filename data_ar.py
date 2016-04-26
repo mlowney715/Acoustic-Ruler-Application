@@ -5,9 +5,9 @@ import threading
 import time
 import os
 import ConfigParser
-from server_ar import Aserver, DeviceConnectionError
+from server_ar import AServer, DeviceConnectionError
 
-class Adata:
+class AData:
 
     def __init__(self, configname):
         self.config = ConfigParser.RawConfigParser()
@@ -50,9 +50,9 @@ class Adata:
             self.changepath(self.path)
             serialPort = self.config.get('serial_info', 'port_name')
             try:
-               self.server = Aserver(serialPort)
+               self.server = AServer(serialPort)
             except DeviceConnectionError:
-                self.connection = False
+                self.server = None
         except ConfigParser.Error:
             print "Warning: Corrupt config file. Resetting to defaults..."
             os.remove(configname)
@@ -101,7 +101,7 @@ class Adata:
         """Tell the device to take a measurement and then calculate the
         distance, write to the log file, and return the distance.
         """
-        if self.connection is not False:
+        if self.server is not None:
             delay = self.server.get_delay()
             if units == 'm':
                 distance = delay*self.speed
@@ -122,7 +122,8 @@ class Adata:
 
     def get_networks(self):
         """Return a list of SSIDs to populate the list."""
-        return ssids = self.server.get_networks()
+        ssids = self.server.get_networks()
+        return ssids
 
     def go_wireless(self, ssid, passkey):
         """Setup the server for a wireless connection and connect the client
@@ -132,8 +133,8 @@ class Adata:
 
     def quit(self):
        """Close any sockets or serial ports that have been opened."""
-       if self.connection != 
-        self.server.closeSerial()
+        if self.server is not None:
+            self.server.closeSerial()
         
 class StoppableThread(threading.Thread):
     """Thread with a stop() condition. 

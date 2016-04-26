@@ -12,17 +12,17 @@ import sys
 import serial
 
 from wx.lib.pubsub import pub
-from data_ar import Adata, NoDeviceError, StoppableThread
+from data_ar import AData, NoDeviceError, StoppableThread
 
 
-class Single_window(wx.Frame):
+class SingleWindow(cls, wx.Frame):
     """Open a Single-Channel Window."""
 
     def __init__(self, parent, ID):
         wx.Frame.__init__(self, parent, ID, "Single Channel System",
                 size=(700,600), style=wx.MINIMIZE_BOX
                           |wx.SYSTEM_MENU|wx.CAPTION|wx.CLOSE_BOX)
-        self.data = Adata('ruler.cfg')
+        self.data = AData('ruler.cfg')
         self.setup()
         
     def setup(self):
@@ -250,7 +250,7 @@ class Single_window(wx.Frame):
         """Open the Preferences Window when the Open Preference button is
         clicked.
         """
-        editPrefFrame = Single_pref(parent=self, ID=997)
+        editPrefFrame = SinglePref(parent=self, ID=997)
         editPrefFrame.Centre()
         editPrefFrame.Show()
         editPrefFrame.ShowModal()
@@ -260,7 +260,7 @@ class Single_window(wx.Frame):
         """Open the Device Configuration Window when the Configure Device
         button is clicked.
         """
-        configDevFrame = Single_deviceconf(parent=self, ID=996)
+        configDevFrame = SingleConfig(parent=self, ID=996)
         configDevFrame.Centre()
         configDevFrame.Show()
         configDevFrame.ShowModal()
@@ -333,13 +333,13 @@ class Single_window(wx.Frame):
         elif current_units == "in":
             self.distance_txtBox.SetValue(str((last_value)*12.00))
 
-class Single_pref(wx.Dialog):
+class SinglePref(cls, wx.Dialog):
     """Open the preferences window for the Single Channel System."""
 
     def __init__(self,parent,ID):
         wx.Dialog.__init__(self,parent, ID, "Edit Preferences", size=(670,300),
                            style=wx.MINIMIZE_BOX|wx.CAPTION|wx.CLOSE_BOX)
-        self.data = Adata('ruler.cfg')
+        self.data = AData('ruler.cfg')
         self.setup()
 
         
@@ -458,14 +458,14 @@ class Single_pref(wx.Dialog):
         self.Close()
         event.Skip()
 
-class Single_deviceconf(wx.Dialog):
+class SingleConfig(cls, wx.Dialog):
     """Open the configuration window for a Single-Channel System."""
 
     def __init__(self, parent, ID):
         wx.Dialog.__init__(self,parent, ID, "Configure Device",size=(510,350),
                 style=wx.MINIMIZE_BOX| wx.CAPTION |wx.CLOSE_BOX)
 
-        self.data = Adata('ruler.cfg')
+        self.data = AData('ruler.cfg')
         self.setup()
 
     def setup(self):
@@ -632,7 +632,7 @@ class Single_deviceconf(wx.Dialog):
 
 if __name__ == '__main__':
     app = wx.App(redirect=True)
-    Mainframe = Single_window(parent=None,ID=999)
+    Mainframe = SingleWindow(parent=None,ID=999)
     Mainframe.Centre()
     Mainframe.Show()
     app.MainLoop()
