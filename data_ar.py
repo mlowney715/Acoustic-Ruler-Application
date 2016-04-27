@@ -132,8 +132,10 @@ class AData:
         self.server.go_wireless('192.168.1.3', 12000, ssid, passkey)
 
     def quit(self):
-       """Close any sockets or serial ports that have been opened."""
-        if self.server is not None:
+        """Close any sockets or serial ports that have been opened."""
+        if self.server is None:
+            pass
+        else:
             self.server.closeSerial()
         
 class StoppableThread(threading.Thread):
