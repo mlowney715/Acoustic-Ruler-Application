@@ -358,8 +358,14 @@ class SinglePref(wx.Dialog):
                                        size=(500,22),
                                        style=wx.TE_READONLY|wx.ALIGN_LEFT)
         browseBtn = wx.Button(panel, size=(100,27), label="Browse")
+        browseBtn.SetFont(font_std)
+        browseBtn.Bind(wx.EVT_BUTTON, self.browse_directories)
         applyBtn = wx.Button(panel,wx.ID_APPLY, size=(100,27))
+        applyBtn.SetFont(font_std)
+        applyBtn.Bind(wx.EVT_BUTTON, self.apply_changes)
         cancelBtn = wx.Button(panel,wx.ID_CANCEL, size=(100,27))
+        cancelBtn.SetFont(font_std)
+        cancelBtn.Bind(wx.EVT_BUTTON, self.close_preferences)
 
         str_speedSoundLabel.SetFont(font_std)
         str_speedLabel.SetFont(font_std)
@@ -369,9 +375,6 @@ class SinglePref(wx.Dialog):
         self.path_txtBox.SetBackgroundColour(wx.Colour(255,250,250))
         locLabel.SetFont(font_std)
         self.path_txtBox.SetFont(font_std)
-        browseBtn.SetFont(font_std)
-        applyBtn.SetFont(font_std)
-        cancelBtn.SetFont(font_std)
 
         groupBox_speed = wx.StaticBox(panel, label="Edit Speed of Sound")
         groupBox_speed.SetFont(font_std)
@@ -416,9 +419,6 @@ class SinglePref(wx.Dialog):
         panel.SetSizerAndFit(editPrefGridSizer)
 
         self.Bind(wx.EVT_CLOSE,self.close_preferences)
-        cancelBtn.Bind(wx.EVT_BUTTON, self.close_preferences)
-        applyBtn.Bind(wx.EVT_BUTTON, self.apply_changes)
-        browseBtn.Bind(wx.EVT_BUTTON, self.browse_directories)
         
     def close_preferences(self,event):
         """Close the Preferences Window when the Close button is clicked"""
@@ -495,7 +495,7 @@ class SingleConfig(wx.Dialog):
                                       style=wx.ALIGN_LEFT|wx.TE_PASSWORD)
 
         pushBtn = wx.Button(panel, size=(100,30), label="Push")
-        pushBtn.bind(wx.EVT_BUTTON, self.push_wireless)
+        # pushBtn.bind(wx.EVT_BUTTON, self.push_wireless)
         closeBtn = wx.Button(panel, size=(130,30), label="Close")
         closeBtn.Bind(wx.EVT_BUTTON, self.close_configuration)
         calibrateSysBtn = wx.Button(panel, size=(130,30),label="Calibrate")

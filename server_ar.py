@@ -2,6 +2,7 @@ from socket import *
 import struct
 import serial
 from wifi import Cell, Scheme
+from operator import attrgetter
 
 class AServer:
 
@@ -34,7 +35,7 @@ class AServer:
                                    reverse=True)
         seen = set()
         self.networks = []
-        for i in unfiltered_unsorted:
+        for i in unfiltered_sorted:
             if i not in seen:
                 self.networks.append(i)
                 seen.add(i)
