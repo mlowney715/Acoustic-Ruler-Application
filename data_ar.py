@@ -121,7 +121,7 @@ class AData:
 
     def get_networks(self):
         """Return a list of SSIDs to populate the list."""
-        ssids = self.server.get_networks()
+        ssids = self.server.scan()
         return ssids
 
     def go_wireless(self, ssid, passkey):

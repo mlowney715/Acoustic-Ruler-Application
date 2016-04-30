@@ -26,7 +26,7 @@ class AServer:
             delay = self.get_wireless_delay()
         return delay
 
-    def get_networks(self):
+    def scan(self):
         """Form a list of available Wi-Fi cells, keeping only the best quality
         Cell out of any duplicates. Return a list of SSIDs, sorted by quality.
         """
@@ -35,11 +35,11 @@ class AServer:
                                    reverse=True)
         seen = set()
         self.networks = []
-        for i in unfiltered_sorted:
-            if i not in seen:
-                self.networks.append(i)
-                seen.add(i)
         s = attrgetter('ssid')
+        for i in unfiltered_sorted:
+            if s(i) not in seen:
+                self.networks.append(i)
+                seen.add(s(i))
         ssids = []
         for i in self.networks:
             ssids.append(s(i))

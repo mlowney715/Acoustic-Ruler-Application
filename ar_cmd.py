@@ -56,6 +56,10 @@ while (input != "quit"):
         rep_thread.stop()
         print rep_thread.stopped()
 
+    elif input == "networks":
+        ss_list = data.get_networks()
+        print ss_list
+
     elif input == "quit":
         pass
 
