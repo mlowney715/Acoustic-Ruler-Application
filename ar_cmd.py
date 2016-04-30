@@ -1,4 +1,4 @@
-from Adata import Adata, NoDeviceError, StoppableThread
+from data_ar import AData, NoDeviceError, StoppableThread
 
 def display_help():
     print "\nCommands:"
@@ -7,7 +7,7 @@ def display_help():
     print "  path		View and/or change data path for log file"
     print "  measure	Trigger a measurement"
 
-data = Adata('ruler.cfg')
+data = AData('ruler.cfg')
 
 input = ""
 

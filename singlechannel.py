@@ -15,7 +15,7 @@ from wx.lib.pubsub import pub
 from data_ar import AData, NoDeviceError, StoppableThread
 
 
-class SingleWindow(cls, wx.Frame):
+class SingleWindow(wx.Frame):
     """Open a Single-Channel Window."""
 
     def __init__(self, parent, ID):
@@ -291,7 +291,7 @@ class SingleWindow(cls, wx.Frame):
             units = self.distanceUnitCombobox.GetValue()
             distance, delay = self.data.measure(units)
             self.distance_txtBox.SetValue(str(distance))
-            self.propdelay_txtBox.SetValue(str(delay))
+            self.propdelay_txtBox.SetValue(str(delay*1000))
 
             # Properly format the time of measurement in the live feed:
             pub.sendMessage('update_feed',
@@ -333,7 +333,7 @@ class SingleWindow(cls, wx.Frame):
         elif current_units == "in":
             self.distance_txtBox.SetValue(str((last_value)*12.00))
 
-class SinglePref(cls, wx.Dialog):
+class SinglePref(wx.Dialog):
     """Open the preferences window for the Single Channel System."""
 
     def __init__(self,parent,ID):
@@ -458,7 +458,7 @@ class SinglePref(cls, wx.Dialog):
         self.Close()
         event.Skip()
 
-class SingleConfig(cls, wx.Dialog):
+class SingleConfig(wx.Dialog):
     """Open the configuration window for a Single-Channel System."""
 
     def __init__(self, parent, ID):

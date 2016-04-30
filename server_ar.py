@@ -6,18 +6,18 @@ from wifi import Cell, Scheme
 class AServer:
 
     def __init__(self, serialName):
-        self.wireless = False
-        try:
-            self.ser = serial.Serial(serialName, timeout=1)
-        except serial.serialutil.SerialException:
-             raise DeviceConnectionError
+        self.wireless = True
+        # try:
+        #     self.ser = serial.Serial(serialName, timeout=1)
+        # except serial.serialutil.SerialException:
+        #      raise DeviceConnectionError
 
     def get_delay(self):
         """Take a measurement from the device using serial unless a wireless
         scheme is set up.
         """
-        self.ser.write(b'm')
         if self.wireless is False:
+            self.ser.write(b'm')
             bin_delay = self.ser.read(16)
             bin_delay = '\0'*(4-len(bin_delay)) + bin_delay
             delay = struct.unpack('f', bin_delay)[0]
@@ -54,16 +54,19 @@ class AServer:
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
 
         # A scheme is needed to connect to a Wi-Fi access point.
-        scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
-        scheme.save()
-        scheme.activate()
-        self.wireless = True
+        # scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
+        # scheme.save()
+        # scheme.activate()
+        # self.wireless = True
 
     def get_wireless_delay(self):
         """Cue a measurement using sockets over the wireless connection.
         Returns a floating point number as the measured delay.
         """
-        self.clientSocket.settimeout(1)
+        self.serverName = '192.168.1.3'
+        self.serverPort = 5678
+        self.clientSocket = socket(AF_INET, SOCK_DGRAM)
+        self.clientSocket.settimeout(3)
         try:
             cue = 'm'
             self.clientSocket.sendto(cue,(self.serverName,

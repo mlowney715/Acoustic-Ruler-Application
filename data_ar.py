@@ -48,9 +48,8 @@ class AData:
             self.speed = self.config.getfloat('phys_env', 'speed_sound')
             self.path = self.config.get('data_env', 'log_path')
             self.changepath(self.path)
-            serialPort = self.config.get('serial_info', 'port_name')
             try:
-               self.server = AServer(serialPort)
+               self.server = AServer('/dev/ttyUSB0')
             except DeviceConnectionError:
                 self.server = None
         except ConfigParser.Error:
@@ -129,7 +128,7 @@ class AData:
         """Setup the server for a wireless connection and connect the client
         application to the network.
         """
-        self.server.go_wireless('192.168.1.3', 12000, ssid, passkey)
+        self.server.go_wireless('acousticpi.local', 5678, ssid, passkey)
 
     def quit(self):
         """Close any sockets or serial ports that have been opened."""
