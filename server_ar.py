@@ -56,7 +56,7 @@ class AServer:
         """Cue a measurement using sockets over the wireless connection.
         Returns a floating point number as the measured delay.
         """
-        self.serverName = '192.168.1.3'
+        self.serverName = 'acousticpi.local'
         self.serverPort = 5678
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
         self.clientSocket.settimeout(3)

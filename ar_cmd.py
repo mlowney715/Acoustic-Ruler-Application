@@ -70,9 +70,7 @@ while (input != "quit"):
             print "Calibration Failed"
 
     elif input == "quit":
-        pass
+        data.quit()
 
     else:
         display_help()
-
-data.quit()

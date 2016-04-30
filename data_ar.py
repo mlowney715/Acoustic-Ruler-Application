@@ -49,7 +49,7 @@ class AData:
             self.path = self.config.get('data_env', 'log_path')
             self.changepath(self.path)
             try:
-               self.server = AServer('/dev/ttyUSB1')
+                self.server = AServer('/dev/ttyUSB0')
             except DeviceConnectionError:
                 self.server = None
         except ConfigParser.Error:

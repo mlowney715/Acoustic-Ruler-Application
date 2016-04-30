@@ -27,7 +27,7 @@ class SingleWindow(wx.Frame):
         
     def setup(self):
         """Create the Single-Channel Window Elements."""
-        self.statusbar = self.CreateStatusBar()
+        statusbar = self.CreateStatusBar()
         pub.subscribe(self.update_feed,'update_feed')   
 
         # Setup the menus
@@ -623,21 +623,17 @@ class SingleConfig(wx.Dialog):
         Dlg.SetFont(self.font_std)
         if Dlg.ShowModal() == wx.ID_OK:
             try:
-                bi = wx.BusyInfo("Calibrating System, please wait...", self)
-                time.sleep(1)
-                bi.Destroy()
                 if self.data.calibrate_device() == True:
-                    bi2 = wx.BusyInfo("Success!", self)
-                    time.sleep(1)
-                    bi2.Destroy()
+                    message = "Calibration Success!"
                 else:
-                    bi2 = wx.BusyInfo("Calibration Error", self)
-                    time.sleep(1)
-                    bi2.Destroy()
+                    message = "Calibration Error!"
             except NoDeviceError:
                 error = wx.BusyInfo("No Device Detected.", self)
-                time.sleep(1)
-                error.Destroy()
+            Dlg = wx.MessageDialog(None, message, "Done",
+                                   wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+            Dlg.SetFont(self.font_std)
+            if Dlg.ShowModal() == wx.ID_OK:
+                pass
 
 
 if __name__ == '__main__':
