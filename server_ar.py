@@ -18,13 +18,56 @@ class AServer:
         scheme is set up.
         """
         if self.wireless is False:
-            self.ser.write(b'm')
+            self.ser.write(b'<<M>>')
             bin_delay = self.ser.read(16)
             bin_delay = '\0'*(4-len(bin_delay)) + bin_delay
             delay = struct.unpack('f', bin_delay)[0]
         else:
             delay = self.get_wireless_delay()
         return delay
+
+    def get_wireless_delay(self):
+        """Cue a measurement using sockets over the wireless connection.
+        Returns a floating point number as the measured delay.
+        """
+        self.serverName = 'acousticpi.local'
+        self.serverPort = 5678
+        self.clientSocket = socket(AF_INET, SOCK_DGRAM)
+        self.clientSocket.settimeout(3)
+        try:
+            cue = '<<M>>'
+            self.clientSocket.sendto(cue,(self.serverName,
+                                          self.serverPort))
+            delay, serverAddress = self.clientSocket.recvfrom(2048)
+            return float(delay)
+        except:
+            raise DeviceConnectionError
+
+    def calibrate(self):
+        """Send a message to the server to start a calibration."""
+        if self.wireless is False:
+            self.ser.write(b'<<C>>')
+            bin_ack = self.ser.read(16)
+            return struct.unpack('s', bin_ack)[0]
+        else:
+            return self.calibrate_wireless()
+
+    def calibrate_wireless(self):
+        """Cue a measurement using sockets over the wireless connection.
+        Returns a floating point number as the measured delay.
+        """
+        self.serverName = '192.168.1.3'
+        self.serverPort = 5678
+        self.clientSocket = socket(AF_INET, SOCK_DGRAM)
+        self.clientSocket.settimeout(3)
+        # try:
+        cue = '<<C>>'
+        self.clientSocket.sendto(cue,(self.serverName,
+                                      self.serverPort))
+        ack, serverAddress = self.clientSocket.recvfrom(2048)
+        return ack
+        # except:
+        #     raise DeviceConnectionError
 
     def scan(self):
         """Form a list of available Wi-Fi cells, keeping only the best quality
@@ -35,14 +78,13 @@ class AServer:
                                    reverse=True)
         seen = set()
         self.networks = []
+        ssids = []
         s = attrgetter('ssid')
         for i in unfiltered_sorted:
             if s(i) not in seen:
                 self.networks.append(i)
+                ssids.append(s(i))
                 seen.add(s(i))
-        ssids = []
-        for i in self.networks:
-            ssids.append(s(i))
         return ssids
 
     def go_wireless(self, serverName, serverPort, ssid, passkey):
@@ -59,23 +101,6 @@ class AServer:
         # scheme.save()
         # scheme.activate()
         # self.wireless = True
-
-    def get_wireless_delay(self):
-        """Cue a measurement using sockets over the wireless connection.
-        Returns a floating point number as the measured delay.
-        """
-        self.serverName = '192.168.1.3'
-        self.serverPort = 5678
-        self.clientSocket = socket(AF_INET, SOCK_DGRAM)
-        self.clientSocket.settimeout(3)
-        try:
-            cue = 'm'
-            self.clientSocket.sendto(cue,(self.serverName,
-                                          self.serverPort))
-            delay, serverAddress = self.clientSocket.recvfrom(2048)
-            return float(delay)
-        except:
-            raise DeviceConnectionError
 
     def closeSocket(self):
         """Close the UDP socket opened to request a measurement over a wireless

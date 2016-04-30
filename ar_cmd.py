@@ -60,6 +60,15 @@ while (input != "quit"):
         ss_list = data.get_networks()
         print ss_list
 
+    elif input == "calibrate":
+        try:
+            if data.calibrate_device() == True:
+                print "Calibration Success."
+            else:
+                print "Please Try Again."
+        except NoDeviceError:
+            print "Calibration Failed"
+
     elif input == "quit":
         pass
 

@@ -49,7 +49,7 @@ class AData:
             self.path = self.config.get('data_env', 'log_path')
             self.changepath(self.path)
             try:
-               self.server = AServer('/dev/ttyUSB0')
+               self.server = AServer('/dev/ttyUSB1')
             except DeviceConnectionError:
                 self.server = None
         except ConfigParser.Error:
@@ -101,21 +101,38 @@ class AData:
         distance, write to the log file, and return the distance.
         """
         if self.server is not None:
-            delay = self.server.get_delay()
-            if units == 'm':
-                distance = delay*self.speed
-            elif units == 'cm':
-                distance = delay*self.speed*100
-            elif units == 'in':
-                distance = (delay*self.speed)*100/2.54
-            else:
-                distance = (delay*self.speed)*100/(2.54*12)
-            log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
-                       +".txt", "a+")
-            log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
-            log.write("Delay: "+str(delay)+" msec\n")
-            log.write("Distance: "+str(distance)+" "+units+'\n')
-            return distance, delay
+            try:
+                delay = self.server.get_delay()
+                if units == 'm':
+                    distance = delay*self.speed
+                elif units == 'cm':
+                    distance = delay*self.speed*100
+                elif units == 'in':
+                    distance = (delay*self.speed)*100/2.54
+                else:
+                    distance = (delay*self.speed)*100/(2.54*12)
+                log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
+                           +".txt", "a+")
+                log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
+                log.write("Delay: "+str(delay)+" msec\n")
+                log.write("Distance: "+str(distance)+" "+units+'\n')
+                return distance, delay
+            except DeviceConnectionError:
+                raise NoDeviceError
+        else:
+            raise NoDeviceError
+
+    def calibrate_device(self):
+        """Begin Calibration process."""
+        if self.server is not None:
+            try:
+                ack = self.server.calibrate()
+                if ack == '<<ACK>>':
+                    return True
+                else:
+                    return False
+            except DeviceConnectionError:
+                raise NoDeviceError
         else:
             raise NoDeviceError
 

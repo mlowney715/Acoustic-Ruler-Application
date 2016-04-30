@@ -499,7 +499,7 @@ class SingleConfig(wx.Dialog):
         closeBtn = wx.Button(panel, size=(130,30), label="Close")
         closeBtn.Bind(wx.EVT_BUTTON, self.close_configuration)
         calibrateSysBtn = wx.Button(panel, size=(130,30),label="Calibrate")
-#         calibrateSysBtn.Bind(wx.EVT_BUTTON, self.calibrate_device)
+        calibrateSysBtn.Bind(wx.EVT_BUTTON, self.trig_calibration)
 
         serialSys_label.SetFont(self.font_std)
         serialSys_comboBox.SetFont(self.font_std)
@@ -614,7 +614,7 @@ class SingleConfig(wx.Dialog):
         passkey = self.password_txtBox.GetValue()
         self.data.go_wireless(ssid, passkey)
 
-    def calibrate_device(self, event):
+    def trig_calibration(self, event):
         """Instruct and supervise the device calibration process."""
         message = """Place Microphone as close as possible to speaker.\n
         Click 'OK' to start system calibration."""
@@ -622,12 +622,22 @@ class SingleConfig(wx.Dialog):
                                wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
         Dlg.SetFont(self.font_std)
         if Dlg.ShowModal() == wx.ID_OK:
-            bi = wx.BusyInfo("Calibrating System, please wait...", self)
-            time.sleep(1)
-            bi2 = wx.BusyInfo("Done!", self)
-            time.sleep(1)
-            bi.Destroy()
-            bi2.Destroy()
+            try:
+                bi = wx.BusyInfo("Calibrating System, please wait...", self)
+                time.sleep(1)
+                bi.Destroy()
+                if self.data.calibrate_device() == True:
+                    bi2 = wx.BusyInfo("Success!", self)
+                    time.sleep(1)
+                    bi2.Destroy()
+                else:
+                    bi2 = wx.BusyInfo("Calibration Error", self)
+                    time.sleep(1)
+                    bi2.Destroy()
+            except NoDeviceError:
+                error = wx.BusyInfo("No Device Detected.", self)
+                time.sleep(1)
+                error.Destroy()
 
 
 if __name__ == '__main__':
