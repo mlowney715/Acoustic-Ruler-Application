@@ -349,12 +349,12 @@ class SinglePref(wx.Dialog):
         font_std = wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL)
 
         str_speedSoundLabel = wx.StaticText(panel, -1, 'Speed of Sound:')
-        self.speedSound_txtBox = wx.TextCtrl(panel, wx.ID_ANY, str(self.data.speed),
+        self.speedSound_txtBox = wx.TextCtrl(panel, wx.ID_ANY, str(self.data.get_speed()),
                                              size=(84,22),
                                              style=wx.ALIGN_RIGHT)
         str_speedLabel = wx.StaticText(panel, -1, 'm/s')
         locLabel = wx.StaticText(panel, -1, 'Data Logger Location:')
-        self.path_txtBox = wx.TextCtrl(panel, wx.ID_ANY, self.data.path,
+        self.path_txtBox = wx.TextCtrl(panel, wx.ID_ANY, self.data.get_path(),
                                        size=(500,22),
                                        style=wx.TE_READONLY|wx.ALIGN_LEFT)
         browseBtn = wx.Button(panel, size=(100,27), label="Browse")
@@ -438,17 +438,17 @@ class SinglePref(wx.Dialog):
         newspeed = float(self.speedSound_txtBox.GetValue())
         newpath = self.path_txtBox.GetValue()
         try:
-            if newspeed != self.data.speed:
+            if newspeed != self.data.get_speed():
                 self.data.changespeed(newspeed)
                 pub.sendMessage('update_feed',
                                 msg="Speed of Sound changed to: "
-                                   +str(self.data.speed)+" m/s\n",
+                                   +str(self.data.get_speed())+" m/s\n",
                                 arg2='wx.DEFAULT')
-            if newpath != self.data.path:
+            if newpath != self.data.get_path():
                 self.data.changepath(newpath)
                 pub.sendMessage('update_feed',
                                 msg="Log File Path changed to: "
-                                   +str(self.data.path)+"\n",
+                                   +str(self.data.get_path())+"\n",
                                 arg2='wx.DEFAULT')
         except ValueError:
             pub.sendMessage('update_feed',

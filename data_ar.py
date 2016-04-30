@@ -10,6 +10,7 @@ from server_ar import AServer, DeviceConnectionError
 class AData:
 
     def __init__(self, configname):
+        self.configname = configname
         self.config = ConfigParser.RawConfigParser()
         if os.path.isfile(configname):
             pass
@@ -27,13 +28,6 @@ class AData:
         self.config.add_section('data_env')
         self.config.set('data_env', 'log_path', './logs')
 
-        # self.config.add_section('socket_info')
-        # self.config.set('socket_info', 'device_address', '127.0.0.1')
-        # self.config.set('socket_info', 'device_port', '12000')
-
-        self.config.add_section('serial_info')
-        self.config.set('serial_info', 'port_name', '/dev/ttyUSB0')
-
         with open(configname, 'wb') as configfile:
             self.config.write(configfile)
         configfile.close()
@@ -45,9 +39,7 @@ class AData:
         """
         try:
             self.config.read(configname)
-            self.speed = self.config.getfloat('phys_env', 'speed_sound')
-            self.path = self.config.get('data_env', 'log_path')
-            self.changepath(self.path)
+            self.changepath(self.get_path())
             try:
                 self.server = AServer('/dev/ttyUSB0')
             except DeviceConnectionError:
@@ -58,13 +50,20 @@ class AData:
             self.newconfig(configname)
             self.load(configname)
 
+    def get_speed(self):
+        self.config.read(self.configname)
+        return self.config.getfloat('phys_env', 'speed_sound')
+
     def changespeed(self, newspeed):
         """Change the speed of sound and update the configuration file."""
         self.config.set('phys_env','speed_sound',newspeed)
         with open('ruler.cfg', 'wb') as configfile:
             self.config.write(configfile)
         configfile.close()
-        self.speed = float(newspeed)
+
+    def get_path(self):
+        self.config.read(self.configname)
+        return self.config.get('data_env', 'log_path')
 
     def changepath(self, newpath):
         """Change the path to the log file and update the configuration file.
@@ -94,7 +93,6 @@ class AData:
         with open('ruler.cfg', 'wb') as configfile:
             self.config.write(configfile)
         configfile.close()
-        self.path = newpath
 	
     def measure(self, units):
         """Tell the device to take a measurement and then calculate the
@@ -104,14 +102,14 @@ class AData:
             try:
                 delay = self.server.get_delay()
                 if units == 'm':
-                    distance = delay*self.speed
+                    distance = delay*self.get_speed()
                 elif units == 'cm':
-                    distance = delay*self.speed*100
+                    distance = delay*self.get_speed()*100
                 elif units == 'in':
-                    distance = (delay*self.speed)*100/2.54
+                    distance = (delay*self.get_speed())*100/2.54
                 else:
-                    distance = (delay*self.speed)*100/(2.54*12)
-                log = open(self.path+"/"+"Aruler_log-"+str(datetime.date.today())
+                    distance = (delay*self.get_speed())*100/(2.54*12)
+                log = open(self.get_path()+"/"+"Aruler_log-"+str(datetime.date.today())
                            +".txt", "a+")
                 log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
                 log.write("Delay: "+str(delay)+" msec\n")
