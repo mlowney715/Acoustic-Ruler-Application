@@ -6,7 +6,6 @@ import thread
 import os
 import platform
 import glob
-import datetime
 import time
 import sys
 import serial
@@ -20,7 +19,7 @@ class SingleWindow(wx.Frame):
 
     def __init__(self, parent, ID):
         wx.Frame.__init__(self, parent, ID, "Single Channel System",
-                size=(700,600), style=wx.MINIMIZE_BOX
+                size=(750,600), style=wx.MINIMIZE_BOX
                           |wx.SYSTEM_MENU|wx.CAPTION|wx.CLOSE_BOX)
         self.data = AData('ruler.cfg')
         self.setup()
@@ -59,10 +58,16 @@ class SingleWindow(wx.Frame):
         # Create measure section buttons and labels
         measureBtn = wx.Button(panel, size=(110,100),label="Measure")
         measureBtn.SetFont(wx.Font(14,  wx.SWISS, wx.NORMAL, wx.BOLD))
-        playBtn = wx.Button(panel, size=(50,50), label="|>")
-        playBtn.SetFont(font_std)
-        stopBtn = wx.Button(panel, size=(50,50), label="|=|")
-        stopBtn.SetFont(font_std)
+        measureBtn.Bind(wx.EVT_BUTTON, self.trig_measure)
+
+        self.playBtn = wx.Button(panel, size=(50,50), label="|>")
+        self.playBtn.SetFont(font_std)
+        self.playBtn.Bind(wx.EVT_BUTTON, self.trig_repeat)
+
+        self.stopBtn = wx.Button(panel, size=(50,50), label="|=|")
+        self.stopBtn.SetFont(font_std)
+        self.stopBtn.Bind(wx.EVT_BUTTON, self.stop_repeating)
+
         str_trgChan = wx.StaticText(panel, -1, "Channel 1 (Speaker 1: Mic 1)")
         str_trgChan.SetFont(font_stdBold)
         distanceLabel = wx.StaticText(panel, -1, "Distance:")
@@ -78,12 +83,19 @@ class SingleWindow(wx.Frame):
                                                 style=wx.CB_READONLY)
         self.distanceUnitCombobox.SetValue(self.metrics[0])
         self.distanceUnitCombobox.SetFont(font_std)
+        self.distanceUnitCombobox.Bind(wx.EVT_COMBOBOX,
+                                       self.update_distance_text)
+
         self.metricBtn = wx.RadioButton(panel, label="Metric",
                                                  style=wx.RB_GROUP)
         self.metricBtn.SetValue(True)
         self.metricBtn.SetFont(font_std)
+        self.metricBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
+
         self.imperialBtn = wx.RadioButton(panel, label="Imperial")
         self.imperialBtn.SetFont(font_std)
+        self.imperialBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
+
         propTimeLabel = wx.StaticText(panel, -1, "Propogation Time:") 
         propTimeLabel.SetFont(font_std)
         self.propdelay_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(84,22),
@@ -95,10 +107,10 @@ class SingleWindow(wx.Frame):
         propdelayUnitLabel.SetFont(font_std)
         gainLabel = wx.StaticText(panel, -1, "Gain:")
         gainLabel.SetFont(font_std)
-        gainTextBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(84,22),
+        self.gain_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(84,22),
                                   style=wx.TE_READONLY|wx.ALIGN_RIGHT)
-        gainTextBox.SetFont(font_std)
-        gainTextBox.SetBackgroundColour(wx.Colour(255,250,250))
+        self.gain_txtBox.SetFont(font_std)
+        self.gain_txtBox.SetBackgroundColour(wx.Colour(255,250,250))
         gainUnitLabel = wx.StaticText(panel, -1, '%')
         gainUnitLabel.SetFont(font_std)
 
@@ -109,9 +121,9 @@ class SingleWindow(wx.Frame):
                                    |wx.ALIGN_CENTRE, border=5)
         trgMeasureGridBag.Add(measureBtn, pos=(1, 0), span=(4,3),
                               flag=wx.TOP|wx.LEFT|wx.Right|wx.BOTTOM, border=5)
-        trgMeasureGridBag.Add(playBtn, pos=(5, 0), span=(1,1),
+        trgMeasureGridBag.Add(self.playBtn, pos=(5, 0), span=(1,1),
                               flag=wx.TOP|wx.LEFT|wx.Right|wx.BOTTOM, border=5)
-        trgMeasureGridBag.Add(stopBtn, pos=(5, 1), span=(1,1),
+        trgMeasureGridBag.Add(self.stopBtn, pos=(5, 1), span=(1,1),
                               flag=wx.TOP|wx.LEFT|wx.Right|wx.BOTTOM, border=5)
         trgMeasureGridBag.Add(distanceLabel, pos=(1, 3), 
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
@@ -131,7 +143,7 @@ class SingleWindow(wx.Frame):
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         trgMeasureGridBag.Add(gainLabel, pos=(3, 3),
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        trgMeasureGridBag.Add(gainTextBox, pos=(3, 4),
+        trgMeasureGridBag.Add(self.gain_txtBox, pos=(3, 4),
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         trgMeasureGridBag.Add(gainUnitLabel, pos=(3, 5),
                               flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
@@ -144,15 +156,7 @@ class SingleWindow(wx.Frame):
                                     |wx.BOTTOM|wx.RIGHT,
                                border=10)
 
-        # Bind the buttons to their respective functions
-        self.metricBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
-        self.distanceUnitCombobox.Bind(wx.EVT_COMBOBOX,
-                                       self.update_distance_text)
-        self.imperialBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
-        measureBtn.Bind(wx.EVT_BUTTON, self.trig_measure)
         
-#        playBtn.Bind(wx.EVT_BUTTON, self.trig_repeat)
-#        stopBtn.Bind(wx.EVT_BUTTON, self.stop_repeating)
         
 
         # Create Status Panel Labels
@@ -176,7 +180,7 @@ class SingleWindow(wx.Frame):
                            border=25)
 
         # Create feed textbox
-        self.feed_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(500,120),
+        self.feed_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(600,100),
                        style=wx.TE_READONLY|wx.ALIGN_LEFT|wx.TE_MULTILINE
                             |wx.TE_RICH2)
         self.feed_txtBox.SetFont(font_std)
@@ -240,16 +244,16 @@ class SingleWindow(wx.Frame):
         if self.distance_txtBox.GetValue() != "":
             if (last_units == "cm" 
                     and current_units == "in"):
-                self.distance_txtBox.SetValue(str((last_value)/2.54))
+                self.distance_txtBox.SetValue(str(round((last_value)/2.54,2)))
             elif (last_units == "m" 
                     and current_units == "in"):
-                self.distance_txtBox.SetValue(str((last_value)*100/2.54))
+                self.distance_txtBox.SetValue(str(round((last_value)*100/2.54,2)))
             elif (last_units == "in" 
                     and current_units == "cm"):
-                self.distance_txtBox.SetValue(str((last_value)*2.54))
+                self.distance_txtBox.SetValue(str(round((last_value)*2.54,2)))
             elif (last_units == "ft"
                     and current_units == "cm"):
-                self.distance_txtBox.SetValue(str((last_value)*12*2.54))
+                self.distance_txtBox.SetValue(str(round((last_value)*12*2.54,2)))
 
     def open_preferences(self, event):
         """Open the Preferences Window when the Open Preference button is
@@ -271,22 +275,26 @@ class SingleWindow(wx.Frame):
         configDevFrame.ShowModal()
         configDevFrame.Destroy()
  
-#     def trig_repeat(self, event):
-#         try:
-#             self.rep_thread = StoppableThread(self.data)
-#             self.rep_thread.start()
-# 
-#         except NoDeviceError:
-#             pub.sendMessage('update_feed',
-#                             msg="Error Connecting to Device.\n", 
-#                             arg2='wx.DEFAULT')
-# 
-#     def stop_repeating(self, event):
-#         self.rep_thread.stop()
-#         pub.sendMessage('update_feed',
-#                         msg=str(self.rep_thread.count)+" Measurements Taken.\n",
-#                         arg2='wx.DEFAULT')
-#         self.rep_thread.join()
+    def trig_repeat(self, event):
+        try:
+            self.rep_thread = StoppableThread(self.data)
+            self.rep_thread.start()
+            self.playBtn.Disable()
+            self.stopBtn.Enable()
+ 
+        except NoDeviceError:
+            pub.sendMessage('update_feed',
+                            msg="Error Connecting to Device.\n", 
+                            arg2='wx.DEFAULT')
+ 
+    def stop_repeating(self, event):
+        self.rep_thread.stop()
+        self.stopBtn.Disable()
+        pub.sendMessage('update_feed',
+                        msg=str(self.rep_thread.count)+" Measurements Taken.\n",
+                        arg2='wx.DEFAULT')
+        self.rep_thread.join()
+        self.playBtn.Enable()
 
     def trig_measure(self,event):
         """Trigger a measurement and display the results in the proper
@@ -294,31 +302,18 @@ class SingleWindow(wx.Frame):
         """
         try:
             units = self.distanceUnitCombobox.GetValue()
-            distance, delay = self.data.measure(units)
+            distance, delay, gain = self.data.measure(units)
             ID = self.data.get_ID()
-            self.distance_txtBox.SetValue(str(distance))
-            self.propdelay_txtBox.SetValue(str(delay*1000))
+            self.distance_txtBox.SetValue(str(round(distance,2)))
+            self.propdelay_txtBox.SetValue(str(round(delay*1000,2)))
+            self.gain_txtBox.SetValue(str(gain*100))
             self.UnitID.SetValue(ID)
 
             # Properly format the time of measurement in the live feed:
             pub.sendMessage('update_feed',
                             msg="Measurement Taken at "
-                            +str(datetime.datetime.now().time().hour)+":",
+                            +self.data.format_time()+'\n',
                             arg2='wx.DEFAULT')
-
-            if datetime.datetime.now().time().minute < 10:
-                pub.sendMessage('update_feed', msg="0", arg2='wx.DEFAULT')
-
-            pub.sendMessage('update_feed',
-                            msg=str(datetime.datetime.now().time().minute)+":",
-                            arg2='wx.DEFAULT')
-
-            if datetime.datetime.now().time().second < 10:
-                pub.sendMessage('update_feed', msg="0", arg2='wx.DEFAULT')
-
-            pub.sendMessage('update_feed',
-                             msg=str(datetime.datetime.now().time().second)
-                             +'\n', arg2='wx.DEFAULT')
         except NoDeviceError:
             pub.sendMessage('update_feed',
                             msg="Error Connecting to Device.\n", 
@@ -332,13 +327,13 @@ class SingleWindow(wx.Frame):
         last_value = float(self.distance_txtBox.GetValue())
         current_units = self.distanceUnitCombobox.GetValue()
         if current_units == "m":
-            self.distance_txtBox.SetValue(str((last_value)/100.00))
+            self.distance_txtBox.SetValue(str(round((last_value)/100.00,2)))
         elif current_units == "cm":
-            self.distance_txtBox.SetValue(str((last_value)*100.00))
+            self.distance_txtBox.SetValue(str(round((last_value)*100.00,2)))
         elif current_units == "ft":
-            self.distance_txtBox.SetValue(str((last_value)/12.00))
+            self.distance_txtBox.SetValue(str(round((last_value)/12.00,2)))
         elif current_units == "in":
-            self.distance_txtBox.SetValue(str((last_value)*12.00))
+            self.distance_txtBox.SetValue(str(round((last_value)*12.00,2)))
 
 class SinglePref(wx.Dialog):
     """Open the preferences window for the Single Channel System."""
@@ -362,8 +357,7 @@ class SinglePref(wx.Dialog):
         str_speedLabel = wx.StaticText(panel, -1, 'm/s')
         locLabel = wx.StaticText(panel, -1, 'Data Logger Location:')
         self.path_txtBox = wx.TextCtrl(panel, wx.ID_ANY, self.data.get_path(),
-                                       size=(500,22),
-                                       style=wx.TE_READONLY|wx.ALIGN_LEFT)
+                                       size=(500,22), style=wx.ALIGN_LEFT)
         browseBtn = wx.Button(panel, size=(100,27), label="Browse")
         browseBtn.SetFont(font_std)
         browseBtn.Bind(wx.EVT_BUTTON, self.browse_directories)
@@ -632,6 +626,10 @@ class SingleConfig(wx.Dialog):
             try:
                 if self.data.calibrate() == True:
                     message = "Calibration Success!"
+                    pub.sendMessage('update_feed',
+                                    msg="System Calibrated at "
+                                       +self.data.format_time()+'\n',
+                                    arg2='wx.DEFAULT')
                 else:
                     message = "Calibration Error!"
             except NoDeviceError:

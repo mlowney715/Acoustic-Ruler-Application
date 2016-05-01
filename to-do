@@ -7,19 +7,24 @@
 # 7. Make a folder to store logs in
 # 8. Request Unit ID at start of app
 # 9. Make get and set methods in AData
+
+Before Leaving Tonight
+# 11. Calibrate status to pub sub
+# 12. Make Frame large enough to view full pub-sub
+# 13. Send constant gain from fake server
+#     - display gain on screen
+#     - log gain in log file
+# 14. Implement thread buttons
+#     - grey-out stop button when play clicked
+#     - vice-versa^^
+# 15. Path text entry
+16. Format floats to 2 significant digits
+
+To the end
 5. Setup device in the config window
 6. Push Wi-Fi info to device and use it wirelessly
     -setup device to use Wi-Fi info and transmit data wirelessly
-10. Calibrate status to the side of config window
-11. Calibrate status to pub sub
-12. Make Frame large enough to view full pub-sub
-13. Send constant gain from fake server
-    - display gain on screen
-    - log gain in log file
-14. Implement thread buttons
-    - grey-out stop button when play clicked
-    - vice-versa^^
-15. Path text entry
+17. Send shutdown signal on close
 
 
 Possibly link to user manual in help

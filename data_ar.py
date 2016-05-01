@@ -113,7 +113,7 @@ class AData:
         """
         if self.server is not None:
             try:
-                delay = self.server.get_delay()
+                delay, gain = self.server.get_delay()
                 if units == 'm':
                     distance = delay*self.get_speed()
                 elif units == 'cm':
@@ -124,10 +124,12 @@ class AData:
                     distance = (delay*self.get_speed())*100/(2.54*12)
                 log = open(self.get_path()+"/"+"Aruler_log-"+str(datetime.date.today())
                            +".txt", "a+")
-                log.write("\nTime: "+str(datetime.datetime.now().time())+"\n")
+                log.write("\nTime: "+str(datetime.datetime.now().time())+'\n')
                 log.write("Delay: "+str(delay)+" msec\n")
                 log.write("Distance: "+str(distance)+" "+units+'\n')
-                return distance, delay
+                log.write("Gain at input: "+str(gain*100)+"%\n")
+                log.close()
+                return distance, delay, gain
             except DeviceConnectionError:
                 raise NoDeviceError
         else:
@@ -146,6 +148,23 @@ class AData:
                 raise NoDeviceError
         else:
             raise NoDeviceError
+
+    def format_time(self):
+        """Format time as (h)h:mm:ss"""
+        formatted_time = []
+        formatted_time.append(str(datetime.datetime.now().time().hour)+":")
+
+        if datetime.datetime.now().time().minute < 10:
+            formatted_time.append("0")
+
+        formatted_time.append(str(datetime.datetime.now().time().minute)+":")
+
+        if datetime.datetime.now().time().second < 10:
+            formatted_time.append("0")
+
+        formatted_time.append(str(datetime.datetime.now().time().second))
+
+        return ''.join(formatted_time)
 
     def scan(self):
         """Return a list of SSIDs to populate the list."""

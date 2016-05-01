@@ -17,6 +17,7 @@ class AServer:
         """Take a measurement from the device using serial unless a wireless
         scheme is set up.
         """
+        # Still need to get gain
         if self.wireless is False:
             self.ser.write(b'<<M>>')
             bin_delay = self.ser.read(16)
@@ -38,8 +39,11 @@ class AServer:
             cue = '<<M>>'
             self.clientSocket.sendto(cue,(self.serverName,
                                           self.serverPort))
-            delay, serverAddress = self.clientSocket.recvfrom(2048)
-            return float(delay)
+            response, serverAddress = self.clientSocket.recvfrom(2048)
+            measurement = response.split('||')
+            delay = measurement[0]
+            gain = measurement[1]
+            return float(delay), float(gain)
         except:
             raise DeviceConnectionError
 
