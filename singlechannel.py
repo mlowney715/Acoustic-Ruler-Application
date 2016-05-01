@@ -156,12 +156,17 @@ class SingleWindow(wx.Frame):
         
 
         # Create Status Panel Labels
-        UnitLabel = wx.StaticText(panel, -1, "Unit ID:")
-        UnitLabel.SetFont(font_std)
+        IDLabel = wx.StaticText(panel, -1, "Unit ID:")
+        IDLabel.SetFont(font_std)
+        self.UnitID = wx.TextCtrl(panel, wx.ID_ANY, "", style=wx.TE_READONLY)
+        self.UnitID.SetFont(font_std)
 
-        statusGridSizer = wx.GridBagSizer(1,1)
-        statusGridSizer.Add(UnitLabel, pos=(0,0),
+        statusGridSizer = wx.GridBagSizer(1,2)
+        statusGridSizer.Add(IDLabel, pos=(0,0),
                             flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
+                            border=5)
+        statusGridSizer.Add(self.UnitID, pos=(0,1),
+                            flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.RIGHT,
                             border=5)
         statusStaticBox = wx.StaticBox(panel, label="Status")
         statusStaticBox.SetFont(font_stdBold)
@@ -290,8 +295,10 @@ class SingleWindow(wx.Frame):
         try:
             units = self.distanceUnitCombobox.GetValue()
             distance, delay = self.data.measure(units)
+            ID = self.data.get_ID()
             self.distance_txtBox.SetValue(str(distance))
             self.propdelay_txtBox.SetValue(str(delay*1000))
+            self.UnitID.SetValue(ID)
 
             # Properly format the time of measurement in the live feed:
             pub.sendMessage('update_feed',
@@ -318,7 +325,7 @@ class SingleWindow(wx.Frame):
                             arg2='wx.DEFAULT')
         
 
-    def update_distance_text(self, last_val):
+    def update_distance_text(self, event):
         """Convert the current units in the distance text-box when new units
         are selected in the combobox.
         """

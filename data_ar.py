@@ -119,6 +119,20 @@ class AData:
                 raise NoDeviceError
         else:
             raise NoDeviceError
+    def get_ID(self):
+        """Obtain Identification from the Device. Acoustic Rulers get treated
+        just like any other young adult when purchasing alcohol.
+        """
+        if self.server is not None:
+            try:
+                ID = self.server.identify()
+                return ID
+            except DeviceConnectionError:
+                raise NoDeviceError
+        else:
+            raise NoDeviceError
+        
+
 
     def calibrate_device(self):
         """Begin Calibration process."""

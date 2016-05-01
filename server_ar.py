@@ -43,6 +43,32 @@ class AServer:
         except:
             raise DeviceConnectionError
 
+    def identify(self):
+        """Send a message to the server to start a calibration."""
+        if self.wireless is False:
+            self.ser.write(b'<<I>>')
+            bin_ack = self.ser.read(16)
+            return struct.unpack('s', bin_ID)[0]
+        else:
+            return self.identify_wireless()
+
+    def identify_wireless(self):
+        """Cue a measurement using sockets over the wireless connection.
+        Returns a floating point number as the measured delay.
+        """
+        self.serverName = 'acousticpi.local'
+        self.serverPort = 5678
+        self.clientSocket = socket(AF_INET, SOCK_DGRAM)
+        self.clientSocket.settimeout(3)
+        # try:
+        cue = '<<I>>'
+        self.clientSocket.sendto(cue,(self.serverName,
+                                      self.serverPort))
+        ID, serverAddress = self.clientSocket.recvfrom(2048)
+        return ID
+        # except:
+        #     raise DeviceConnectionError
+
     def calibrate(self):
         """Send a message to the server to start a calibration."""
         if self.wireless is False:
