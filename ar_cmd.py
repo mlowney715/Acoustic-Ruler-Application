@@ -4,7 +4,7 @@ def display_help():
     print "\nCommands:"
     print "  help		Display this information"
     print "  speed		View and/or change speed of sound"
-    print "  path		View and/or change data path for log file"
+    print "  path		View and/or change data.get_path() for log file"
     print "  measure	Trigger a measurement"
 
 data = AData('ruler.cfg')
@@ -18,13 +18,13 @@ while (input != "quit"):
         display_help()
 
     elif input == "speed":
-        print "speed of sound is %f m/s" % data.speed
+        print "speed of sound is %f m/s" % data.get_speed
         change = raw_input("Change? (y/n): ")
         if change == "y":
             while True:
                 try:
                     newspeed = raw_input("Please enter speed of sound (m/s): ")
-                    data.changespeed(newspeed)
+                    data.set_speed(newspeed)
                     break
                 except ValueError:
                     print "It needs to be a number..."
@@ -32,11 +32,11 @@ while (input != "quit"):
             pass
 
     elif input == "path":
-        print "log path is %s" % data.path
+        print "log path is %s" % data.get_path()
         change = raw_input("Change? (y/n): ")
         if change == "y":
-            newpath = raw_input("Please enter data path for log file: ")
-            data.changepath(newpath)
+            newpath = raw_input("Please enter data.get_path() for log file: ")
+            data.set_path(newpath)
         else:
             pass
 
@@ -57,12 +57,12 @@ while (input != "quit"):
         print rep_thread.stopped()
 
     elif input == "networks":
-        ss_list = data.get_networks()
+        ss_list = data.scan()
         print ss_list
 
     elif input == "calibrate":
         try:
-            if data.calibrate_device() == True:
+            if data.calibrate() == True:
                 print "Calibration Success."
             else:
                 print "Please Try Again."

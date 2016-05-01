@@ -446,13 +446,13 @@ class SinglePref(wx.Dialog):
         newpath = self.path_txtBox.GetValue()
         try:
             if newspeed != self.data.get_speed():
-                self.data.changespeed(newspeed)
+                self.data.set_speed(newspeed)
                 pub.sendMessage('update_feed',
                                 msg="Speed of Sound changed to: "
                                    +str(self.data.get_speed())+" m/s\n",
                                 arg2='wx.DEFAULT')
             if newpath != self.data.get_path():
-                self.data.changepath(newpath)
+                self.data.set_path(newpath)
                 pub.sendMessage('update_feed',
                                 msg="Log File Path changed to: "
                                    +str(self.data.get_path())+"\n",
@@ -610,7 +610,7 @@ class SingleConfig(wx.Dialog):
         """Scan the wireless access points to create a list of potential
         connections
         """
-        networks = self.data.get_networks()
+        networks = self.data.scan()
         return networks
 
     def push_wireless(self, event):
@@ -630,7 +630,7 @@ class SingleConfig(wx.Dialog):
         Dlg.SetFont(self.font_std)
         if Dlg.ShowModal() == wx.ID_OK:
             try:
-                if self.data.calibrate_device() == True:
+                if self.data.calibrate() == True:
                     message = "Calibration Success!"
                 else:
                     message = "Calibration Error!"

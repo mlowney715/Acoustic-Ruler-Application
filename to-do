@@ -4,15 +4,22 @@
 # 3. Convert results when new unit is chosen from dropbox
 # 4. log resuts in the units that are set at the time
 # FINISH PLAY/STOP
+# 7. Make a folder to store logs in
+# 8. Request Unit ID at start of app
+# 9. Make get and set methods in AData
 5. Setup device in the config window
 6. Push Wi-Fi info to device and use it wirelessly
     -setup device to use Wi-Fi info and transmit data wirelessly
-# 7. Make a folder to store logs in
-8. Request Unit ID at start of app
-# 9. Make get and set methods in AData
 10. Calibrate status to the side of config window
 11. Calibrate status to pub sub
 12. Make Frame large enough to view full pub-sub
 13. Send constant gain from fake server
     - display gain on screen
     - log gain in log file
+14. Implement thread buttons
+    - grey-out stop button when play clicked
+    - vice-versa^^
+15. Path text entry
+
+
+Possibly link to user manual in help

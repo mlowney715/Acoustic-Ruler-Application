@@ -15,10 +15,10 @@ class AData:
         if os.path.isfile(configname):
             pass
         else:
-            self.newconfig(configname)
-        self.load(configname)
+            self.new_config(configname)
+        self.load_config(configname)
 
-    def newconfig(self, configname):
+    def new_config(self, configname):
         """Make a configuration file and set the parameters to default
         values.
         """
@@ -31,15 +31,15 @@ class AData:
         with open(configname, 'wb') as configfile:
             self.config.write(configfile)
         configfile.close()
-        self.load(configname)
+        self.load_config(configname)
 
-    def load(self, configname):
+    def load_config(self, configname):
         """Try to load the already existing configuration file. If it is
         corrupt, make a new one and then load it.
         """
         try:
             self.config.read(configname)
-            self.changepath(self.get_path())
+            self.set_path(self.get_path())
             try:
                 self.server = AServer('/dev/ttyUSB0')
             except DeviceConnectionError:
@@ -47,14 +47,14 @@ class AData:
         except ConfigParser.Error:
             print "Warning: Corrupt config file. Resetting to defaults..."
             os.remove(configname)
-            self.newconfig(configname)
-            self.load(configname)
+            self.new_config(configname)
+            self.load_config(configname)
 
     def get_speed(self):
         self.config.read(self.configname)
         return self.config.getfloat('phys_env', 'speed_sound')
 
-    def changespeed(self, newspeed):
+    def set_speed(self, newspeed):
         """Change the speed of sound and update the configuration file."""
         self.config.set('phys_env','speed_sound',newspeed)
         with open('ruler.cfg', 'wb') as configfile:
@@ -65,7 +65,7 @@ class AData:
         self.config.read(self.configname)
         return self.config.get('data_env', 'log_path')
 
-    def changepath(self, newpath):
+    def set_path(self, newpath):
         """Change the path to the log file and update the configuration file.
         """
         if newpath[0] == '~':
@@ -94,6 +94,19 @@ class AData:
             self.config.write(configfile)
         configfile.close()
 	
+    def get_ID(self):
+        """Obtain Identification from the Device. Acoustic Rulers get treated
+        just like any other young adult when purchasing alcohol.
+        """
+        if self.server is not None:
+            try:
+                ID = self.server.get_ID()
+                return ID
+            except DeviceConnectionError:
+                raise NoDeviceError
+        else:
+            raise NoDeviceError
+
     def measure(self, units):
         """Tell the device to take a measurement and then calculate the
         distance, write to the log file, and return the distance.
@@ -119,26 +132,12 @@ class AData:
                 raise NoDeviceError
         else:
             raise NoDeviceError
-    def get_ID(self):
-        """Obtain Identification from the Device. Acoustic Rulers get treated
-        just like any other young adult when purchasing alcohol.
-        """
-        if self.server is not None:
-            try:
-                ID = self.server.identify()
-                return ID
-            except DeviceConnectionError:
-                raise NoDeviceError
-        else:
-            raise NoDeviceError
-        
 
-
-    def calibrate_device(self):
+    def calibrate(self):
         """Begin Calibration process."""
         if self.server is not None:
             try:
-                ack = self.server.calibrate()
+                ack = self.server.get_calibration()
                 if ack == '<<ACK>>':
                     return True
                 else:
@@ -148,23 +147,23 @@ class AData:
         else:
             raise NoDeviceError
 
-    def get_networks(self):
+    def scan(self):
         """Return a list of SSIDs to populate the list."""
-        ssids = self.server.scan()
+        ssids = self.server.get_networks()
         return ssids
 
-    def go_wireless(self, ssid, passkey):
-        """Setup the server for a wireless connection and connect the client
-        application to the network.
-        """
-        self.server.go_wireless('acousticpi.local', 5678, ssid, passkey)
+    # def go_wireless(self, ssid, passkey):
+    #     """Setup the server for a wireless connection and connect the client
+    #     application to the network.
+    #     """
+    #     self.server.go_wireless('acousticpi.local', 5678, ssid, passkey)
 
     def quit(self):
         """Close any sockets or serial ports that have been opened."""
         if self.server is None:
             pass
         else:
-            self.server.closeSerial()
+            self.server.close_serial()
         
 class StoppableThread(threading.Thread):
     """Thread with a stop() condition. 

@@ -43,16 +43,16 @@ class AServer:
         except:
             raise DeviceConnectionError
 
-    def identify(self):
+    def get_ID(self):
         """Send a message to the server to start a calibration."""
         if self.wireless is False:
             self.ser.write(b'<<I>>')
-            bin_ack = self.ser.read(16)
+            bin_ID = self.ser.read(16)
             return struct.unpack('s', bin_ID)[0]
         else:
-            return self.identify_wireless()
+            return self.get_wireless_ID()
 
-    def identify_wireless(self):
+    def get_wireless_ID(self):
         """Cue a measurement using sockets over the wireless connection.
         Returns a floating point number as the measured delay.
         """
@@ -69,19 +69,17 @@ class AServer:
         # except:
         #     raise DeviceConnectionError
 
-    def calibrate(self):
+    def get_calibration(self):
         """Send a message to the server to start a calibration."""
         if self.wireless is False:
             self.ser.write(b'<<C>>')
             bin_ack = self.ser.read(16)
             return struct.unpack('s', bin_ack)[0]
         else:
-            return self.calibrate_wireless()
+            return self.get_wireless_calibration()
 
-    def calibrate_wireless(self):
-        """Cue a measurement using sockets over the wireless connection.
-        Returns a floating point number as the measured delay.
-        """
+    def get_wireless_calibration(self):
+        """Use a UDP socket to send a message to start calibration."""
         self.serverName = 'acousticpi.local'
         self.serverPort = 5678
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
@@ -95,7 +93,7 @@ class AServer:
         # except:
         #     raise DeviceConnectionError
 
-    def scan(self):
+    def get_networks(self):
         """Form a list of available Wi-Fi cells, keeping only the best quality
         Cell out of any duplicates. Return a list of SSIDs, sorted by quality.
         """
@@ -113,28 +111,28 @@ class AServer:
                 seen.add(s(i))
         return ssids
 
-    def go_wireless(self, serverName, serverPort, ssid, passkey):
-        """Switch from a serial connection to a wireless connection and set up
-        a UDP socket
-        """
-        # serverName is the IP address of the Raspberry Pi over the network
-        self.serverName = serverName
-        self.serverPort = serverPort
-        self.clientSocket = socket(AF_INET, SOCK_DGRAM)
+    # def go_wireless(self, serverName, serverPort, ssid, passkey):
+    #     """Switch from a serial connection to a wireless connection and set up
+    #     a UDP socket
+    #     """
+    #     # serverName is the IP address of the Raspberry Pi over the network
+    #     self.serverName = serverName
+    #     self.serverPort = serverPort
+    #     self.clientSocket = socket(AF_INET, SOCK_DGRAM)
 
-        # A scheme is needed to connect to a Wi-Fi access point.
-        # scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
-        # scheme.save()
-        # scheme.activate()
-        # self.wireless = True
+    #     # A scheme is needed to connect to a Wi-Fi access point.
+    #     # scheme = Scheme.for_cell('wlan0', 'ruler', ssid, passkey)
+    #     # scheme.save()
+    #     # scheme.activate()
+    #     # self.wireless = True
 
-    def closeSocket(self):
+    def close_socket(self):
         """Close the UDP socket opened to request a measurement over a wireless
         connection.
         """
         self.clientSocket.close()
 
-    def closeSerial(self):
+    def close_serial(self):
         """Close the serial port that was opened to request a measurement over
         a serial connection.
         """
