@@ -22,11 +22,14 @@ class AData:
         """Make a configuration file and set the parameters to default
         values.
         """
-        self.config.add_section('phys_env')
-        self.config.set('phys_env', 'speed_sound', '343')
+        self.config.add_section('calibration')
+        self.config.set('calibration', 'speed_sound', '343')
 
         self.config.add_section('data_env')
         self.config.set('data_env', 'log_path', './logs')
+
+        self.config.add_section('calibration')
+        self.config.set('calibration', 'unit_ID', 'set')
 
         with open(configname, 'wb') as configfile:
             self.config.write(configfile)
@@ -52,11 +55,11 @@ class AData:
 
     def get_speed(self):
         self.config.read(self.configname)
-        return self.config.getfloat('phys_env', 'speed_sound')
+        return self.config.getfloat('calibration', 'speed_sound')
 
     def set_speed(self, newspeed):
         """Change the speed of sound and update the configuration file."""
-        self.config.set('phys_env','speed_sound',newspeed)
+        self.config.set('calibration','speed_sound',newspeed)
         with open('ruler.cfg', 'wb') as configfile:
             self.config.write(configfile)
         configfile.close()
@@ -139,15 +142,22 @@ class AData:
         """Begin Calibration process."""
         if self.server is not None:
             try:
-                ack = self.server.get_calibration()
-                if ack == '<<ACK>>':
-                    return True
-                else:
-                    return False
+                cal_delay, ID = self.server.get_calibration()
+                self.config.set('calibration','delay', cal_delay)
+                self.config.set('calibration', 'unit_ID', ID)
+                return ID
             except DeviceConnectionError:
                 raise NoDeviceError
         else:
             raise NoDeviceError
+
+    def get_cal_delay(self):
+        self.config.read(self.configname)
+        return self.config.get('calibration', 'delay')
+
+    def get_unit_ID(self):
+        self.config.read(self.configname)
+        return self.config.get('calibration', 'ID')
 
     def format_time(self):
         """Format time as (h)h:mm:ss"""
@@ -179,10 +189,7 @@ class AData:
 
     def quit(self):
         """Close any sockets or serial ports that have been opened."""
-        if self.server is None:
-            pass
-        else:
-            self.server.close_serial()
+        self.server.shut_down()
         
 class StoppableThread(threading.Thread):
     """Thread with a stop() condition. 

@@ -67,6 +67,7 @@ class SingleWindow(wx.Frame):
         self.stopBtn = wx.Button(panel, size=(50,50), label="|=|")
         self.stopBtn.SetFont(font_std)
         self.stopBtn.Bind(wx.EVT_BUTTON, self.stop_repeating)
+        self.stopBtn.Disable()
 
         str_trgChan = wx.StaticText(panel, -1, "Channel 1 (Speaker 1: Mic 1)")
         str_trgChan.SetFont(font_stdBold)
@@ -96,7 +97,7 @@ class SingleWindow(wx.Frame):
         self.imperialBtn.SetFont(font_std)
         self.imperialBtn.Bind(wx.EVT_RADIOBUTTON, self.change_distance_units)
 
-        propTimeLabel = wx.StaticText(panel, -1, "Propogation Time:") 
+        propTimeLabel = wx.StaticText(panel, -1, "Propagation Time:") 
         propTimeLabel.SetFont(font_std)
         self.propdelay_txtBox = wx.TextCtrl(panel, wx.ID_ANY, '',size=(84,22),
                                             style=wx.TE_READONLY
@@ -155,10 +156,7 @@ class SingleWindow(wx.Frame):
                                flag=wx.EXPAND|wx.LEFT|wx.TOP
                                     |wx.BOTTOM|wx.RIGHT,
                                border=10)
-
         
-        
-
         # Create Status Panel Labels
         IDLabel = wx.StaticText(panel, -1, "Unit ID:")
         IDLabel.SetFont(font_std)
@@ -169,7 +167,7 @@ class SingleWindow(wx.Frame):
         statusGridSizer.Add(IDLabel, pos=(0,0),
                             flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.LEFT,
                             border=5)
-        statusGridSizer.Add(self.UnitID, pos=(0,1),
+        statusGridSizer.Add(self.UnitID, pos=(1,1),
                             flag=wx.TOP|wx.ALIGN_LEFT|wx.BOTTOM|wx.RIGHT,
                             border=5)
         statusStaticBox = wx.StaticBox(panel, label="Status")
@@ -203,8 +201,8 @@ class SingleWindow(wx.Frame):
 
     def quit_application(self, event):
         """Quit The Application when File->Quit is clicked."""
-        self.Close()
         self.data.quit()
+        self.Close()
 
     def update_feed(self,msg,arg2=None):
         """Update the live feed at the bottom of the window when something
@@ -279,6 +277,10 @@ class SingleWindow(wx.Frame):
         try:
             self.rep_thread = StoppableThread(self.data)
             self.rep_thread.start()
+            pub.sendMessage('update_feed',
+                            msg="Constant Measurements started at "
+                            +self.data.format_time()+'\n', 
+                            arg2='wx.DEFAULT')
             self.playBtn.Disable()
             self.stopBtn.Enable()
  
@@ -301,15 +303,20 @@ class SingleWindow(wx.Frame):
         units.
         """
         try:
+            #             if self.data.get_unit_ID() is 'set':
+            #                 message = "Please Calibrate your system."
+            #                 Dlg = wx.MessageDialog(None, message, "Calibrate",
+            #                                        wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+            #                 Dlg.SetFont(self.font_std)
+            #                 if Dlg.ShowModal() == wx.ID_OK:
+            #                     pass
+            #             else:
+            # self.UnitID.SetValue(self.data.get_unit_ID())
             units = self.distanceUnitCombobox.GetValue()
             distance, delay, gain = self.data.measure(units)
-            ID = self.data.get_ID()
             self.distance_txtBox.SetValue(str(round(distance,2)))
             self.propdelay_txtBox.SetValue(str(round(delay*1000,2)))
             self.gain_txtBox.SetValue(str(gain*100))
-            self.UnitID.SetValue(ID)
-
-            # Properly format the time of measurement in the live feed:
             pub.sendMessage('update_feed',
                             msg="Measurement Taken at "
                             +self.data.format_time()+'\n',
@@ -318,7 +325,6 @@ class SingleWindow(wx.Frame):
             pub.sendMessage('update_feed',
                             msg="Error Connecting to Device.\n", 
                             arg2='wx.DEFAULT')
-        
 
     def update_distance_text(self, event):
         """Convert the current units in the distance text-box when new units
@@ -343,7 +349,6 @@ class SinglePref(wx.Dialog):
                            style=wx.MINIMIZE_BOX|wx.CAPTION|wx.CLOSE_BOX)
         self.data = AData('ruler.cfg')
         self.setup()
-
         
     def setup(self):
         panel = wx.Panel(self, wx.ID_ANY)
@@ -500,7 +505,7 @@ class SingleConfig(wx.Dialog):
         closeBtn = wx.Button(panel, size=(130,30), label="Close")
         closeBtn.Bind(wx.EVT_BUTTON, self.close_configuration)
         calibrateSysBtn = wx.Button(panel, size=(130,30),label="Calibrate")
-        calibrateSysBtn.Bind(wx.EVT_BUTTON, self.trig_calibration)
+        # calibrateSysBtn.Bind(wx.EVT_BUTTON, self.trig_calibration)
 
         serialSys_label.SetFont(self.font_std)
         serialSys_comboBox.SetFont(self.font_std)
@@ -615,30 +620,27 @@ class SingleConfig(wx.Dialog):
         passkey = self.password_txtBox.GetValue()
         self.data.go_wireless(ssid, passkey)
 
-    def trig_calibration(self, event):
-        """Instruct and supervise the device calibration process."""
-        message = """Place Microphone as close as possible to speaker.\n
-        Click 'OK' to start system calibration."""
-        Dlg = wx.MessageDialog(None, message, "Start System Calibration",
-                               wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
-        Dlg.SetFont(self.font_std)
-        if Dlg.ShowModal() == wx.ID_OK:
-            try:
-                if self.data.calibrate() == True:
-                    message = "Calibration Success!"
-                    pub.sendMessage('update_feed',
-                                    msg="System Calibrated at "
-                                       +self.data.format_time()+'\n',
-                                    arg2='wx.DEFAULT')
-                else:
-                    message = "Calibration Error!"
-            except NoDeviceError:
-                error = wx.BusyInfo("No Device Detected.", self)
-            Dlg = wx.MessageDialog(None, message, "Done",
-                                   wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
-            Dlg.SetFont(self.font_std)
-            if Dlg.ShowModal() == wx.ID_OK:
-                pass
+    # def trig_calibration(self, event):
+    #     """Instruct and supervise the device calibration process."""
+    #     message = """Place Microphone as close as possible to speaker.\n
+    #     Click 'OK' to start system calibration."""
+    #     Dlg = wx.MessageDialog(None, message, "Start System Calibration",
+    #                            wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+    #     Dlg.SetFont(self.font_std)
+    #     if Dlg.ShowModal() == wx.ID_OK:
+    #         try:
+    #             message = "Calibration Success!"
+    #             pub.sendMessage('update_feed',
+    #                             msg="System Calibrated at "
+    #                                +self.data.format_time()+'\n',
+    #                             arg2='wx.DEFAULT')
+    #         except NoDeviceError:
+    #             message = "No Device Detected!"
+    #         Dlg = wx.MessageDialog(None, message, "Done",
+    #                                wx.OK|wx.CANCEL|wx.ICON_INFORMATION)
+    #         Dlg.SetFont(self.font_std)
+    #         if Dlg.ShowModal() == wx.ID_OK:
+    #             pass
 
 
 if __name__ == '__main__':

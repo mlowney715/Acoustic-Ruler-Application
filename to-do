@@ -18,12 +18,12 @@ Before Leaving Tonight
 #     - grey-out stop button when play clicked
 #     - vice-versa^^
 # 15. Path text entry
-16. Format floats to 2 significant digits
+# 16. Format floats to 2 significant digits
 
 To the end
 5. Setup device in the config window
 6. Push Wi-Fi info to device and use it wirelessly
-    -setup device to use Wi-Fi info and transmit data wirelessly
+#    -setup device to use Wi-Fi info and transmit data wirelessly
 17. Send shutdown signal on close
 
 
