@@ -31,7 +31,7 @@ class AServer:
         """Cue a measurement using sockets over the wireless connection.
         Returns a floating point number as the measured delay.
         """
-        self.serverName = '192.168.2.103'
+        self.serverName = '192.168.2.100'
         self.serverPort = 5678
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
         self.clientSocket.settimeout(3)
@@ -63,7 +63,7 @@ class AServer:
         """Cue a measurement using sockets over the wireless connection.
         Returns a floating point number as the measured delay.
         """
-        self.serverName = '192.168.2.103'
+        self.serverName = '192.168.2.100'
         self.serverPort = 5678
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
         self.clientSocket.settimeout(10)
@@ -87,7 +87,7 @@ class AServer:
 
     def get_wireless_calibration(self):
         """Use a UDP socket to send a message to start calibration."""
-        self.serverName = '192.168.2.103'
+        self.serverName = '192.168.2.100'
         self.serverPort = 5678
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
         self.clientSocket.settimeout(15)
@@ -140,7 +140,7 @@ class AServer:
         """Close the UDP socket opened to request a measurement over a wireless
         connection.
         """
-        self.serverName = '192.168.2.103'
+        self.serverName = '192.168.2.100'
         self.serverPort = 5678
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
         self.clientSocket.settimeout(10)
