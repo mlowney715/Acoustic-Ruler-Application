@@ -22,26 +22,26 @@ class AData:
         """Make a configuration file and set the parameters to default
         values.
         """
-        self.config.add_section('calibration')
-        self.config.set('calibration', 'speed_sound', '343')
+        self.config.add_section('phys_env')
+        self.config.set('phys_env', 'speed_sound', '343')
 
         self.config.add_section('data_env')
         self.config.set('data_env', 'log_path', './logs')
+        
+        self.config.set('data_env', 'ID', '')
+        self.config.set('data_env', 'cal_delay', 0)
 
-        self.config.add_section('calibration')
-        self.config.set('calibration', 'unit_ID', 'set')
-
-        with open(configname, 'wb') as configfile:
+        with open(self.configname, 'wb') as configfile:
             self.config.write(configfile)
         configfile.close()
-        self.load_config(configname)
+        self.load_config(self.configname)
 
     def load_config(self, configname):
         """Try to load the already existing configuration file. If it is
         corrupt, make a new one and then load it.
         """
         try:
-            self.config.read(configname)
+            self.config.read(self.configname)
             self.set_path(self.get_path())
             try:
                 self.server = AServer('/dev/ttyUSB0')
@@ -49,17 +49,17 @@ class AData:
                 self.server = None
         except ConfigParser.Error:
             print "Warning: Corrupt config file. Resetting to defaults..."
-            os.remove(configname)
-            self.new_config(configname)
-            self.load_config(configname)
+            os.remove(self.configname)
+            self.new_config(self.configname)
+            self.load_config(self.configname)
 
     def get_speed(self):
         self.config.read(self.configname)
-        return self.config.getfloat('calibration', 'speed_sound')
+        return self.config.getfloat('phys_env', 'speed_sound')
 
     def set_speed(self, newspeed):
         """Change the speed of sound and update the configuration file."""
-        self.config.set('calibration','speed_sound',newspeed)
+        self.config.set('phys_env','speed_sound',newspeed)
         with open('ruler.cfg', 'wb') as configfile:
             self.config.write(configfile)
         configfile.close()
@@ -103,8 +103,7 @@ class AData:
         """
         if self.server is not None:
             try:
-                ID = self.server.get_ID()
-                return ID
+                self.calibrate()
             except DeviceConnectionError:
                 raise NoDeviceError
         else:
@@ -114,50 +113,51 @@ class AData:
         """Tell the device to take a measurement and then calculate the
         distance, write to the log file, and return the distance.
         """
-        if self.server is not None:
-            try:
-                delay, gain = self.server.get_delay()
-                if units == 'm':
-                    distance = delay*self.get_speed()
-                elif units == 'cm':
-                    distance = delay*self.get_speed()*100
-                elif units == 'in':
-                    distance = (delay*self.get_speed())*100/2.54
-                else:
-                    distance = (delay*self.get_speed())*100/(2.54*12)
-                log = open(self.get_path()+"/"+"Aruler_log-"+str(datetime.date.today())
-                           +".txt", "a+")
-                log.write("\nTime: "+str(datetime.datetime.now().time())+'\n')
-                log.write("Delay: "+str(delay)+" msec\n")
-                log.write("Distance: "+str(distance)+" "+units+'\n')
-                log.write("Gain at input: "+str(gain*100)+"%\n")
-                log.close()
-                return distance, delay, gain
-            except DeviceConnectionError:
-                raise NoDeviceError
-        else:
+        # if self.server is not None:
+        try:
+            delay, gain = self.server.get_delay()
+            delay = delay - self.get_cal_delay()
+            if units == 'm':
+                distance = delay*self.get_speed()
+            elif units == 'cm':
+                distance = delay*self.get_speed()*100
+            elif units == 'in':
+                distance = (delay*self.get_speed())*100/2.54
+            else:
+                distance = (delay*self.get_speed())*100/(2.54*12)
+            log = open(self.get_path()+"/"+"Aruler_log-"+str(datetime.date.today())
+                       +".txt", "a+")
+            log.write("\nTime: "+str(datetime.datetime.now().time())+'\n')
+            log.write("Delay: "+str(delay)+" msec\n")
+            log.write("Distance: "+str(distance)+" "+units+'\n')
+            log.write("Gain at input: "+str(gain*100)+"%\n")
+            log.close()
+            return distance, delay, gain
+        except DeviceConnectionError:
             raise NoDeviceError
+        # else:
+         #    raise NoDeviceError
 
     def calibrate(self):
         """Begin Calibration process."""
-        if self.server is not None:
-            try:
-                cal_delay, ID = self.server.get_calibration()
-                self.config.set('calibration','delay', cal_delay)
-                self.config.set('calibration', 'unit_ID', ID)
-                return ID
-            except DeviceConnectionError:
-                raise NoDeviceError
-        else:
+        try:
+            cal_delay, ID = self.server.get_calibration()
+            self.config.set('data_env', 'cal_delay', cal_delay)
+            self.config.set('data_env', 'ID', ID)
+            with open(self.configname, 'wb') as configfile:
+                self.config.write(configfile)
+            configfile.close()
+            self.load_config(self.configname)
+        except DeviceConnectionError:
             raise NoDeviceError
 
     def get_cal_delay(self):
         self.config.read(self.configname)
-        return self.config.get('calibration', 'delay')
+        return self.config.getfloat('data_env', 'cal_delay')
 
     def get_unit_ID(self):
         self.config.read(self.configname)
-        return self.config.get('calibration', 'ID')
+        return self.config.get('data_env', 'ID')
 
     def format_time(self):
         """Format time as (h)h:mm:ss"""

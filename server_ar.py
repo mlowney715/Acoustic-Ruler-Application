@@ -31,7 +31,7 @@ class AServer:
         """Cue a measurement using sockets over the wireless connection.
         Returns a floating point number as the measured delay.
         """
-        self.serverName = '192.168.2.102'
+        self.serverName = '192.168.2.103'
         self.serverPort = 5678
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
         self.clientSocket.settimeout(3)
@@ -41,7 +41,10 @@ class AServer:
                                           self.serverPort))
             response, serverAddress = self.clientSocket.recvfrom(2048)
             measurement = response.split('||')
-            delay = measurement[0]
+            if measurement[0] > 0.05:
+                delay = 0
+            else:
+                delay = measurement[0]
             gain = measurement[1]
             return float(delay), float(gain)
         except:
@@ -60,10 +63,10 @@ class AServer:
         """Cue a measurement using sockets over the wireless connection.
         Returns a floating point number as the measured delay.
         """
-        self.serverName = '192.168.2.102'
+        self.serverName = '192.168.2.103'
         self.serverPort = 5678
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
-        self.clientSocket.settimeout(3)
+        self.clientSocket.settimeout(10)
         # try:
         cue = '<<I>>'
         self.clientSocket.sendto(cue,(self.serverName,
@@ -84,10 +87,10 @@ class AServer:
 
     def get_wireless_calibration(self):
         """Use a UDP socket to send a message to start calibration."""
-        self.serverName = '192.168.2.102'
+        self.serverName = '192.168.2.103'
         self.serverPort = 5678
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
-        self.clientSocket.settimeout(3)
+        self.clientSocket.settimeout(15)
         try:
             cue = '<<C>>'
             self.clientSocket.sendto(cue,(self.serverName,
@@ -137,10 +140,10 @@ class AServer:
         """Close the UDP socket opened to request a measurement over a wireless
         connection.
         """
-        self.serverName = '192.168.2.102'
+        self.serverName = '192.168.2.103'
         self.serverPort = 5678
         self.clientSocket = socket(AF_INET, SOCK_DGRAM)
-        self.clientSocket.settimeout(3)
+        self.clientSocket.settimeout(10)
         try:
             cue = '<<Q>>'
             self.clientSocket.sendto(cue,(self.serverName,
